@@ -1,16 +1,38 @@
 import { Route, Routes } from 'react-router-dom';
 import Login from './Login.jsx';
 import Register from './Register.jsx';
+import LoginBackground from './LoginBackground.jsx';
+import Dashboard from './DashBoard.jsx';
+import DashboardLayout from './DashBoardLayout.jsx';
 function App() {
-
   return (
-    <div className="text-white h-[100vh] flex justify-center items-center bg-cover" style={{"background": "url('../src/assets/manila.png"}}>
-      <Routes>
-        <Route path='login' element={ <Login/> }/>
-        <Route path='register' element={< Register/> }/>
-      </Routes>
-    </div>
-  )
+    <Routes>
+      <Route
+        path="login"
+        element={
+          <LoginBackground>
+            <Login />
+          </LoginBackground>
+        }
+      />
+      <Route
+        path="register"
+        element={
+          <LoginBackground>
+            <Register />
+          </LoginBackground>
+        }
+      />
+      <Route
+        path="dashboard"
+        element={
+          <DashboardLayout>
+          <Dashboard />
+          </DashboardLayout>
+        }/>
+
+    </Routes>
+  );
 }
 
 export default App
