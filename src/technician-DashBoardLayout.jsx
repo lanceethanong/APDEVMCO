@@ -36,7 +36,7 @@ export default function DashBoardLayout({ children }) {
         </div>
 
         {/* Center Title */}
-        <h1 className="text-xl font-bold text-center flex-1 -ml-6">Dashboard</h1>
+        <h1 className="text-xl font-bold text-center flex-1 -ml-6">LabSlot.Inc</h1>
 
         {/* Profile Picture on the Right */}
         <div className="w-10 h-10 rounded-full overflow-hidden">

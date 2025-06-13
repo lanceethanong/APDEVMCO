@@ -1,8 +1,9 @@
 import { useState } from "react";
 
 export default function DashBoardLayout({ children }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false); //Checks whether the menu sidebar is expanded or not(default not)
 
+  //Handles view redirection
   const handleNavigation = (type) => {
     switch (type) {
       case "home":
@@ -16,7 +17,6 @@ export default function DashBoardLayout({ children }) {
         window.location.href = "/help";
         break;
       default:
-        // placeholder for reservation/help
         break;
     }
   };
@@ -25,21 +25,21 @@ export default function DashBoardLayout({ children }) {
     <div className="h-screen flex flex-col">
       {/* Header */}
       <header className="bg-green-800 text-white flex items-center justify-between px-4 py-3">
-        {/* Menu Icon on the Left */}
+        {/* Menu  */}
         <div className="flex items-center space-x-10">
           <div
             className="text-2xl cursor-pointer"
-            onClick={() => setIsExpanded(!isExpanded)}
+            onClick={() => setIsExpanded(!isExpanded)} //Allows sidebar to be expanded
           >
             ☰
           </div>
-          <div className="text-xl font-bold">Welcome User</div>
+          <div className="text-xl font-bold">Welcome User</div> 
         </div>
 
-        {/* Center Title */}
-        <h1 className="text-xl font-bold text-center flex-1 -ml-6">Dashboard</h1>
+        {/* Title */}
+        <h1 className="text-xl font-bold text-center flex-1 -ml-6">LabSlot.Inc</h1>
 
-        {/* Profile Picture on the Right */}
+        {/* Profile Picture*/}
         <div className="w-10 h-10 rounded-full overflow-hidden">
           <img
             src="./profile.png"
@@ -49,16 +49,16 @@ export default function DashBoardLayout({ children }) {
         </div>
       </header>
 
-      {/* Main content with sidebar and page content */}
+      {/* Main Content */}
       <div className="flex flex-1">
-        {/* Sidebar */}
+        {/* Sidebar: source: https://www.youtube.com/watch?v=MszSqhEw__8&pp=0gcJCdgAo7VqN5tD*/}
         <aside
           className={`${
             isExpanded ? "w-48" : "w-24"
           } bg-white p-4 border-r border-gray-200 transition-all duration-300`}
         >
-          <nav className="flex flex-col space-y-4">
-            {/* Icon Button Template */}
+          <nav className="flex flex-col space-y-4"> 
+            {/* Icons */}
             {[
               { icon: "home.png", label: "Home", action: "home" },
               { icon: "help.png", label: "Help", action: "help" },
@@ -67,11 +67,11 @@ export default function DashBoardLayout({ children }) {
               <button
                 key={label}
                 onClick={() => handleNavigation(action)}
-                className="flex items-center w-full py-4 px-2 rounded hover:bg-gray-200 transition-colors"
+                className="flex items-center w-full py-4 px-2 rounded hover:bg-gray-200 transition-colors" 
               >
                 <img src={`./${icon}`} alt={`${label} Icon`} className="w-8 h-8" />
                 {isExpanded && (
-                  <span className="ml-3 font-bold text-sm">{label}</span>
+                  <span className="ml-3 font-bold text-sm">{label}</span> 
                 )}
               </button>
             ))}
