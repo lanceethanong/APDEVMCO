@@ -2,8 +2,11 @@ import { Route, Routes } from 'react-router-dom';
 import Login from './Login.jsx';
 import Register from './Register.jsx';
 import LoginBackground from './LoginBackground.jsx';
-import Dashboard from './DashBoard.jsx';
+import Dashboard from './Dashboard.jsx';
+import DashBoardTechnician from './technician-Dashboard.jsx';
 import DashboardLayout from './DashBoardLayout.jsx';
+import DashboardLayoutTechnician from './technician-DashBoardLayout.jsx';
+import Help from './help.jsx';
 function App() {
   return (
     <Routes>
@@ -30,6 +33,15 @@ function App() {
           <Dashboard />
           </DashboardLayout>
         }/>
+        <Route
+        path="dashboard-technician"
+        element={
+          <DashboardLayoutTechnician>
+          <DashBoardTechnician />
+          </DashboardLayoutTechnician>
+        }/>
+        
+      <Route path="help" element={<Help />} />
 
     </Routes>
   );

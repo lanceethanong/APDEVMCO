@@ -61,6 +61,7 @@ export default function DashBoardLayout({ children }) {
             {/* Icon Button Template */}
             {[
               { icon: "home.png", label: "Home", action: "home" },
+              { icon: "reservation.png", label: "Reservation List", action: "reservation" },
               { icon: "help.png", label: "Help", action: "help" },
               { icon: "logout.png", label: "Logout", action: "logout" },
             ].map(({ icon, label, action }) => (
