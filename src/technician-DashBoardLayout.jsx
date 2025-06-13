@@ -13,10 +13,9 @@ export default function DashBoardLayout({ children }) {
         break;
 
       case "help":
-        window.location.href = "/help";
+        window.location.href = "/help-technician";
         break;
       default:
-        // placeholder for reservation/help
         break;
     }
   };

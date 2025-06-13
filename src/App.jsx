@@ -7,6 +7,7 @@ import DashBoardTechnician from './technician-Dashboard.jsx';
 import DashboardLayout from './DashBoardLayout.jsx';
 import DashboardLayoutTechnician from './technician-DashBoardLayout.jsx';
 import Help from './help.jsx';
+import HelpTechnician from './technician-help.jsx';
 function App() {
   return (
     <Routes>
@@ -42,6 +43,7 @@ function App() {
         }/>
         
       <Route path="help" element={<Help />} />
+      <Route path="help-technician" element={<HelpTechnician />} />
 
     </Routes>
   );
