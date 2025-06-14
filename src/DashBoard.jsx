@@ -3,15 +3,16 @@ import { useEffect, useState } from "react";
 export default function Dashboard() {
   const [selectedDateElement, setSelectedDateElement] = useState(null);
   const availableRooms = [
-    "Lab 1 (CCPROG3) ",
-    "Lab 2 (CCAPDEV) ",
-    "Lab 3 (STCHUIX) ",
-    "Lab 4 (ITNET04) ",
-    "Lab 5 (CSARCH2) ",
+    "Lab 1 (CCPROG3)",
+    "Lab 2 (CCAPDEV)",
+    "Lab 3 (STCHUIX)",
+    "Lab 4 (ITNET04)",
+    "Lab 5 (CSARCH2)",
   ];
   const [selectedRoom, setSelectedRoom] = useState(null);
   const [clock, setClock] = useState("");
   const [currentMonth, setCurrentMonth] = useState(new Date());
+  const [seatSelections, setSeatSelections] = useState({});
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -25,6 +26,31 @@ export default function Dashboard() {
     const newMonth = new Date(currentMonth);
     newMonth.setMonth(currentMonth.getMonth() + offset);
     setCurrentMonth(newMonth);
+  };
+
+  const getDateKey = (dateString, lab) => {
+    const date = new Date(dateString);
+    const datePart = date.toISOString().split("T")[0];
+    return `${datePart}_${lab || "NO_LAB"}`;
+  };
+
+  const toggleSeatSelection = (seatIdx, slotIdx) => {
+    if (!selectedDateElement || !selectedRoom) return;
+    const key = getDateKey(selectedDateElement, selectedRoom);
+    const id = `${seatIdx}-${slotIdx}`;
+    setSeatSelections((prev) => {
+      const current = prev[key] || new Set();
+      const newSet = new Set(current);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return {
+        ...prev,
+        [key]: newSet,
+      };
+    });
   };
 
   const generateCalendar = () => {
@@ -47,7 +73,7 @@ export default function Dashboard() {
 
     const calendar = [];
     let date = new Date(startOfMonth);
-    date.setDate(date.getDate() - startDay); // Start from Sunday of the first week
+    date.setDate(date.getDate() - startDay);
 
     for (let week = 0; week < 6; week++) {
       for (let day = 0; day < 7; day++) {
@@ -56,7 +82,6 @@ export default function Dashboard() {
         const isBeyondLimit = date > limitDate;
         const key = date.toDateString();
         const isSelected = selectedDateElement === key;
-
         const isDisabled = !isCurrentMonth || isPastDate || isBeyondLimit;
 
         calendar.push(
@@ -87,20 +112,28 @@ export default function Dashboard() {
     return calendar;
   };
 
-  const hours = [...Array(12)].map(
-    (_, i) => `${7 + i}:00${i < 5 ? "am" : "pm"}`
-  );
+  const hours = [...Array(12)].map((_, i) => `${7 + i}:00${i < 5 ? "am" : "pm"}`);
   const seats = 35;
   const slotsPerHour = 2;
   const totalSlots = hours.length * slotsPerHour;
 
+  const currentDateKey =
+    selectedDateElement && selectedRoom && getDateKey(selectedDateElement, selectedRoom);
+  const selectedSeats = currentDateKey && seatSelections[currentDateKey]
+    ? seatSelections[currentDateKey]
+    : new Set();
+
+  const isToday = new Date().toDateString() === selectedDateElement;
+
+  const now = new Date();
+  const currentHour = now.getHours();
+  const currentMinutes = now.getMinutes();
+
   return (
     <div className="p-4 space-y-4">
-      {/* Clock */}
       <div className="text-right font-mono text-sm text-gray-600">{clock}</div>
 
       <div className="flex gap-4">
-        {/* Room Selector */}
         <div className="w-1/4">
           <h3 className="text-lg font-bold mb-2">Available Rooms</h3>
           <div className="space-y-2">
@@ -118,7 +151,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Calendar */}
         <div className="flex-1">
           <div className="flex justify-between items-center mb-4">
             <button
@@ -144,12 +176,10 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Seat Availability Info */}
       <div className="text-xl font-bold mb-1">
         Seat availability at Lab Room: {selectedRoom || "(not selected)"}
       </div>
 
-      {/* Legend */}
       <div className="flex justify-center mb-4">
         <div className="flex items-center space-x-10">
           <div className="flex flex-col items-center space-y-1">
@@ -173,22 +203,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Seat Grid */}
       <div className="overflow-auto border rounded min-h-[50vh]">
-        <table className="border-collapse text-base min-w-full table-fixed">
+        <table className="border-collapse text-base min-w-full table-fixed available-table">
           <thead>
             <tr>
-              <th className="border px-4 py-3 sticky left-0 bg-white z-10 w-28">
-                Seat
-              </th>
+              <th className="border px-4 py-3 sticky left-0 bg-white z-10 w-28">Seat</th>
               {hours.map((h, i) => (
-                <th
-                  key={i}
-                  colSpan={slotsPerHour}
-                  className="border px-4 py-3 text-nowrap w-20"
-                >
-                  {h}
-                </th>
+                <th key={i} colSpan={slotsPerHour} className="border px-4 py-3 w-20">{h}</th>
               ))}
             </tr>
           </thead>
@@ -198,24 +219,56 @@ export default function Dashboard() {
                 <td className="border px-4 py-3 sticky left-0 bg-white font-semibold">
                   Seat {seatIdx + 1}
                 </td>
-                {[...Array(totalSlots)].map((_, slotIdx) => (
-                  <td
-                    key={slotIdx}
-                    className="border w-14 h-14 cursor-pointer hover:bg-green-100"
-                    onClick={(e) =>
-                      e.currentTarget.classList.toggle("bg-green-300")
+                {[...Array(totalSlots)].map((_, slotIdx) => {
+                  const slotKey = `${seatIdx}-${slotIdx}`;
+
+                  // Check if this slot is in the past (only matters for today)
+                  let isPastSlot = false;
+                  if (isToday) {
+                    const slotHour = 7 + Math.floor(slotIdx / 2);
+                    const slotMinute = slotIdx % 2 === 0 ? 0 : 30;
+                    if (
+                      slotHour < currentHour ||
+                      (slotHour === currentHour && slotMinute <= currentMinutes)
+                    ) {
+                      isPastSlot = true;
                     }
-                  ></td>
-                ))}
+                  }
+
+                  const isDisabled =
+                    !selectedRoom || !selectedDateElement || (isToday && isPastSlot);
+
+                  return (
+                    <td
+                      key={slotIdx}
+                      className={`border w-14 h-14 ${
+                        isDisabled
+                          ? "bg-gray-100 cursor-not-allowed"
+                          : selectedSeats.has(slotKey)
+                          ? "bg-green-300 cursor-pointer"
+                          : "hover:bg-green-100 cursor-pointer"
+                      }`}
+                      onClick={() =>
+                        !isDisabled && toggleSeatSelection(seatIdx, slotIdx)
+                      }
+                    ></td>
+                  );
+                })}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {/* Reserve Button */}
       <div className="text-center mt-4">
-        <button className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        <button
+          className={`px-4 py-2 rounded text-white ${
+            selectedRoom && selectedDateElement
+              ? "bg-green-600 hover:bg-green-700"
+              : "bg-gray-400 cursor-not-allowed"
+          }`}
+          disabled={!selectedRoom || !selectedDateElement}
+        >
           Reserve Slot
         </button>
       </div>
