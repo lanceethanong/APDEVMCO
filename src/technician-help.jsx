@@ -17,12 +17,7 @@ export default function HelpSupport() {
           ← Back to Home
         </Link>
       </div>
-
-      {/* Header & Sidebar Placeholder */}
-      <div id="header-sidebar">
-        {/* <HeaderSidebar /> could go here in the future */}
-      </div>
-
+      
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold mb-8 text-center">Help and Support</h1>
