@@ -8,21 +8,12 @@ import DashboardLayout from './DashBoardLayout.jsx';
 import DashboardLayoutTechnician from './technician-DashBoardLayout.jsx';
 import Help from './help.jsx';
 import HelpTechnician from './technician-help.jsx';
-import Home from './home.jsx';
 function App() {
   return (
 
 
 
     <Routes>
-      <Route
-        path=""
-        element={
-          <LoginBackground>
-            <Login />
-          </LoginBackground>
-        }
-      />
       <Route
         path="login"
         element={
