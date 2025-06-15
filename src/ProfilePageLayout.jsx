@@ -10,9 +10,6 @@ export default function ProfilePageLayout({ children }) {
       case "dashboard":
         navigate("/dashboard");
         break;
-      case "reservations":
-        navigate("/reservations");
-        break;
       case "logout":
         // Clear session data
         localStorage.removeItem('rememberMe');
@@ -60,7 +57,6 @@ export default function ProfilePageLayout({ children }) {
           <nav className="flex flex-col space-y-4">
             {[
               { icon: "home.png", label: "Dashboard", action: "dashboard" },
-              { icon: "reservation.png", label: "My Reservations", action: "reservations" },
               { icon: "help.png", label: "Help", action: "help" },
               { icon: "logout.png", label: "Logout", action: "logout" },
             ].map(({ icon, label, action }) => (

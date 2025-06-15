@@ -40,7 +40,7 @@ export default function DashBoardLayout({ children }) {
 
         {/* Profile Picture on the Right */}
         <div className="w-10 h-10 rounded-full overflow-hidden">
-            <Link to="/register">
+            <Link to="/profile">
             <img
               src="./profile.png"
               alt="Profile"
