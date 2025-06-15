@@ -6,6 +6,7 @@ import Dashboard from './DashBoard.jsx';
 import DashBoardTechnician from './technician-DashBoard.jsx';
 import DashboardLayout from './DashBoardLayout.jsx';
 import DashboardLayoutTechnician from './technician-DashBoardLayout.jsx';
+import ConfirmReservation from './ConfirmReservation.jsx';
 import ProfilePage from './ProfilePage.jsx';
 import ProfilePageLayout from './ProfilePageLayout.jsx';
 import Help from './help.jsx';
@@ -49,6 +50,16 @@ function App() {
           </DashboardLayoutTechnician>
         }
       />
+
+      <Route
+        path="confirm"
+        element={
+          <DashboardLayout>
+            <ConfirmReservation />
+          </DashboardLayout>
+        }
+      />
+
       <Route
         path="profile"
         element={

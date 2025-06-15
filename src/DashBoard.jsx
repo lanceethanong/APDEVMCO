@@ -291,16 +291,18 @@ export default function Dashboard() {
       </div>
 
       <div className="text-center mt-4">
-        <button
-          className={`px-4 py-2 rounded text-white ${
-            selectedRoom && selectedDateElement
-              ? "bg-green-600 hover:bg-green-700"
-              : "bg-gray-400 cursor-not-allowed"
-          }`}
-          disabled={!selectedRoom || !selectedDateElement}
-        >
-          Reserve Slot
-        </button>
+        <a href="/confirm">
+          <button
+            className={`px-4 py-2 rounded text-white ${
+              selectedRoom && selectedDateElement
+                ? "bg-green-600 hover:bg-green-700"
+                : "bg-gray-400 cursor-not-allowed"
+            }`}
+            disabled={!selectedRoom || !selectedDateElement}
+          >
+            Reserve Slot
+          </button>
+        </a>
       </div>
     </div>
   );
