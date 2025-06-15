@@ -56,7 +56,7 @@ export default function ProfilePageLayout({ children }) {
         >
           <nav className="flex flex-col space-y-4">
             {[
-              { icon: "home.png", label: "Dashboard", action: "dashboard" },
+              { icon: "home.png", label: "Hello", action: "dashboard" },
               { icon: "help.png", label: "Help", action: "help" },
               { icon: "logout.png", label: "Logout", action: "logout" },
             ].map(({ icon, label, action }) => (
