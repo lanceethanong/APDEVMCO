@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-
+import { Link } from 'react-router-dom';
 export default function Dashboard() {
   const [selectedDateElement, setSelectedDateElement] = useState(null);
   const availableRooms = [ // List of All classes Available 

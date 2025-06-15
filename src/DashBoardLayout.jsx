@@ -1,5 +1,5 @@
 import { useState } from "react";
-
+import { Link } from 'react-router-dom';
 export default function DashBoardLayout({ children }) {
   const [isExpanded, setIsExpanded] = useState(false); //Checks whether the menu sidebar is expanded or not(default not)
 
@@ -41,11 +41,13 @@ export default function DashBoardLayout({ children }) {
 
         {/* Profile Picture*/}
         <div className="w-10 h-10 rounded-full overflow-hidden">
-          <img
-            src="./profile.png"
-            alt="Profile"
-            className="w-full h-full object-cover"
-          />
+            <Link to="/register">
+            <img
+              src="./profile.png"
+              alt="Profile"
+              className="w-full h-full object-cover cursor-pointer"
+            />
+          </Link>
         </div>
       </header>
 

@@ -4,25 +4,25 @@ import { Link } from "react-router-dom"; // for client-side routing
 export default function HelpSupport() {
   useEffect(() => {
     document.title = "Help & Support";
-  }, []);
+  }, []); 
 
   return (
     <div className="min-h-screen bg-gray-100 text-gray-800 relative">
       {/* Back to Home Button */}
       <div className="absolute top-5 left-5">
-        <Link
+        <Link // Links back to the home page 
           to="/dashboard-technician"
           className=" text-black px-4 py-2 rounded hover:bg-gray-200 text-xl transition"
         >
           ← Back to Home
         </Link>
       </div>
-      
+
       {/* Main Content */}
       <div className="max-w-4xl mx-auto px-4 py-10">
         <h1 className="text-3xl font-bold mb-8 text-center">Help and Support</h1>
 
-        {/* FAQs Section */}
+        {/* FAQs Section  source : https://www.youtube.com/watch?v=ioa8T4tA4zg*/}
         <section className="mb-12">
           <h2 className="text-2xl font-semibold mb-4">FAQs</h2>
           <div className="space-y-4">
@@ -46,7 +46,7 @@ export default function HelpSupport() {
               },
             ].map(({ q, a }, index) => (
               <details key={index} className="border border-gray-300 rounded-md p-4">
-                <summary className="cursor-pointer font-medium">{q}</summary>
+                <summary className="cursor-pointer font-medium">{q}</summary> 
                 <p className="mt-2 text-gray-700">{a}</p>
               </details>
             ))}
