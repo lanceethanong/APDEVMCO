@@ -8,12 +8,12 @@ import DashboardLayout from './DashBoardLayout.jsx';
 import DashboardLayoutTechnician from './technician-DashBoardLayout.jsx';
 import Help from './help.jsx';
 import HelpTechnician from './technician-help.jsx';
+import HomePage from './home.jsx';
+
 function App() {
   return (
-
-
-
     <Routes>
+      <Route path="" element={<HomePage />} />
       <Route
         path="login"
         element={
@@ -34,22 +34,23 @@ function App() {
         path="dashboard"
         element={
           <DashboardLayout>
-          <Dashboard />
+            <Dashboard />
           </DashboardLayout>
-        }/>
-        <Route
+        }
+      />
+      <Route
         path="dashboard-technician"
         element={
           <DashboardLayoutTechnician>
-          <DashBoardTechnician />
+            <DashBoardTechnician />
           </DashboardLayoutTechnician>
-        }/>
-        
+        }
+      />
       <Route path="help" element={<Help />} />
       <Route path="help-technician" element={<HelpTechnician />} />
-
+      
     </Routes>
   );
 }
 
-export default App
+export default App;
