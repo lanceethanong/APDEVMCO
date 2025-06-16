@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>User Profile</title>
+  <link rel="stylesheet" href="../css/profile.css">
+</head>
+<body class="profile-body">
+  <header class="header">
+    <div class="menu-title">
+      <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+      <div class="section-label">Profile Settings</div>
+    </div>
+    <h1 class="brand">LabSlot.Inc</h1>
+    <div class="profile-image">
+      <img src="../assets/profile.png" alt="Profile">
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside id="sidebar" class="sidebar collapsed">
+      <nav>
+        <button onclick="navigateTo('dashboard')">
+          <img src="../assets/home.png" alt="Home">
+          <span class="label">Home</span>
+        </button>
+        <button onclick="navigateTo('help')">
+          <img src="../assets/help.png" alt="Help">
+          <span class="label">Help</span>
+        </button>
+        <button onclick="navigateTo('logout')">
+          <img src="../assets/logout.png" alt="Logout">
+          <span class="label">Logout</span>
+        </button>
+      </nav>
+    </aside>
+
+    <main class="content">
+      <section class="profile-section">
+        <div class="profile-header">
+          <div class="profile-left">
+            <div class="profile-card-portrait">
+              <div class="profile-photo">
+                <img src="../assets/profile.png" alt="Profile Photo">
+              </div>
+              <div class="profile-info" id="profile-fields"></div>
+            </div>
+          </div>
+
+          <div class="profile-right">
+            <div class="edit-buttons" id="edit-buttons">
+              <button onclick="enableEditMode()">Edit Profile</button>
+            </div>
+            <div class="about-section">
+              <h3>About Me</h3>
+              <textarea id="about-text" readonly></textarea>
+            </div>
+          </div>
+        </div>
+
+        <div class="reservations">
+          <h3>My Reservations</h3>
+          <div id="reservations"></div>
+        </div>
+
+        <div class="account-actions">
+          <h3>Account Actions</h3>
+          <button>Change Password</button>
+          <button onclick="deleteAccount()">Delete Account</button>
+        </div>
+      </section>
+
+    </main>
+  </div>
+
+  <footer class="footer">
+    © 2025 LabSlot.Inc All rights reserved.
+  </footer>
+
+  <script src="../javascript/profile.js"></script>
+</body>
+</html>
