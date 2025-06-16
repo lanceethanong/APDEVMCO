@@ -10,10 +10,11 @@
   <div class="login-auth-wrapper">
     <div class="login-box">
       <h1 class="login-title">REGISTER</h1>
-      <form action="/dashboard" method="GET">
+      <form action="DashBoard.html" method="POST" id="register-form">
         <div class="form-group">
           <label for="email">DLSU Email</label><br />
           <input type="email" id="email" name="email" required />
+          <span id="emailError" class="error-message"></span>
         </div>
 
         <div class="form-group">
@@ -24,6 +25,7 @@
         <div class="form-group">
           <label for="confirm-password">Confirm Password</label><br />
           <input type="password" id="confirm-password" name="confirm-password" required />
+          <span id="confirm-password-error" class="error-message"></span>
         </div>
 
         <div class="form-group">
@@ -44,5 +46,6 @@
       </form>
     </div>
   </div>
+  <script src="../javascript/register.js"></script>
 </body>
 </html>
