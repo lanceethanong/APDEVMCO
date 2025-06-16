@@ -51,7 +51,7 @@ Technician (radio button)
 
 User 5
 juandelacruz@dlsu.edu.ph (must have @dlsu.edu.ph)
-@dmin123456   (at least 8 characters)
+joserizal1234   (at least 8 characters)
 Student (radio button)
 
 Lab Classes
