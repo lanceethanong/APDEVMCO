@@ -139,17 +139,35 @@
   margin: 0.25rem 0;
 }
 
-.reservation-item button {
+.reservation-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+}
+
+.edit-btn {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+}
+
+.edit-btn:hover {
+  background-color: #1d4ed8;
+}
+
+.cancel-btn {
   background-color: #dc2626;
   color: white;
   border: none;
   padding: 0.5rem 1rem;
   border-radius: 0.375rem;
-  margin-top: 0.5rem;
   cursor: pointer;
 }
 
-.reservation-item button:hover {
+.cancel-btn:hover {
   background-color: #b91c1c;
 }
 

@@ -81,8 +81,19 @@ function updateEditButtons() {
     : `<button onclick="enableEditMode()">Edit Profile</button>`;
 }
 
+function editReservation(id) {
+  const reservation = reservations.find(r => r.id === id);
+  if (reservation) {
+    alert(`Editing reservation #${id}\nLab: ${reservation.lab}\nSeat: ${reservation.seat}\nDate: ${reservation.date}\nTime: ${reservation.time}`);
+    // In a real implementation, you would open a modal here to edit the reservation
+  }
+}
+
 function cancelReservation(id) {
-  alert(`Reservation #${id} cancelled`);
+  if (confirm("Are you sure you want to cancel this reservation?")) {
+    alert(`Reservation #${id} cancelled`);
+    // In a real implementation, you would remove the reservation from the array and update the UI
+  }
 }
 
 function renderReservations() {
@@ -95,7 +106,10 @@ function renderReservations() {
       <p><strong>Seat:</strong> ${r.seat}</p>
       <p><strong>Date:</strong> ${r.date}</p>
       <p><strong>Time:</strong> ${r.time}</p>
-      <button onclick="cancelReservation(${r.id})">Cancel</button>
+      <div class="reservation-actions">
+        <button class="edit-btn" onclick="editReservation(${r.id})">Edit</button>
+        <button class="cancel-btn" onclick="cancelReservation(${r.id})">Cancel</button>
+      </div>
     </div>
   `
     )
@@ -109,7 +123,6 @@ function deleteAccount() {
   }
 }
 
-// Password Change Functions
 function openPasswordModal() {
   document.getElementById('password-modal').style.display = 'block';
 }
@@ -139,18 +152,15 @@ function changePassword() {
     return false;
   }
 
-  // Here you would typically make an API call to change the password
   alert("Password changed successfully!");
   closePasswordModal();
   return false;
 }
 
-// On page load
 window.onload = () => {
   populateProfileFields();
   renderReservations();
   
-  // Add change password form submission handler
   document.getElementById('change-password-form').onsubmit = function(e) {
     e.preventDefault();
     changePassword();
