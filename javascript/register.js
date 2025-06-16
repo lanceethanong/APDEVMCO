@@ -18,13 +18,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validate email
     if (!/@dlsu.edu.ph\s*$/.test(email_input.value)) {
-      email_error.innerHTML = "Please enter an email from the accepted domain.";
+      email_error.innerHTML = "Please enter a DLSU email address";
       isValid = false;
     }
 
     // Validate password match
     if (password.value !== confirm.value) {
-      password_error.innerHTML = "Please ensure to input the same password for both fields.";
+      password_error.innerHTML = "Passwords do not match.";
       isValid = false;
     }
 
