@@ -28,6 +28,11 @@ document.addEventListener('DOMContentLoaded', () => {
       isValid = false;
     }
 
+    if (password.value.length < 8) {
+      password_error.innerHTML = "Passwords must at least be 8 characters";
+      isValid = false;
+    }
+
     // Validate role
     if (!role || !role.value) {
       alert("Please select a role.");
