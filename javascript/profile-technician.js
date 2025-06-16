@@ -1,30 +1,13 @@
 let editMode = false;
 
 const profileData = {
-  name: "Juan Dela Cruz",
-  email: "juan.delacruz@dlsu.edu.ph",
-  role: "Student",
-  idNumber: "12345678",
+  name: "admin123",
+  email: "admin123@dlsu.edu.ph",
+  role: "Technician",
+  idNumber: "12212345",
   contactNumber: "09123456789",
-  description: "Computer Science student specializing in AI",
+  description: "Senior Lab Technician specializing in computer systems",
 };
-
-const reservations = [
-  {
-    id: 1,
-    lab: "Lab 1 (CCPROG3)",
-    seat: "A12",
-    date: "2025-06-20",
-    time: "10:00-12:30"
-  },
-  {
-    id: 2,
-    lab: "Lab 3 (STCHUIX)",
-    seat: "B05",
-    date: "2025-06-22",
-    time: "14:00-16:00"
-  }
-];
 
 function populateProfileFields() {
   const container = document.getElementById("profile-fields");
@@ -81,34 +64,6 @@ function updateEditButtons() {
     : `<button onclick="enableEditMode()">Edit Profile</button>`;
 }
 
-function cancelReservation(id) {
-  alert(`Reservation #${id} cancelled`);
-}
-
-function renderReservations() {
-  const container = document.getElementById("reservations");
-  container.innerHTML = reservations
-    .map(
-      (r) => `
-    <div class="reservation-item">
-      <p><strong>Lab:</strong> ${r.lab}</p>
-      <p><strong>Seat:</strong> ${r.seat}</p>
-      <p><strong>Date:</strong> ${r.date}</p>
-      <p><strong>Time:</strong> ${r.time}</p>
-      <button onclick="cancelReservation(${r.id})">Cancel</button>
-    </div>
-  `
-    )
-    .join("");
-}
-
-function deleteAccount() {
-  if (confirm("Are you sure you want to delete your account? This will cancel all your reservations.")) {
-    alert("Account deleted successfully!");
-    window.location.href = "login.html";
-  }
-}
-
 // Password Change Functions
 function openPasswordModal() {
   document.getElementById('password-modal').style.display = 'block';
@@ -139,7 +94,6 @@ function changePassword() {
     return false;
   }
 
-  // Here you would typically make an API call to change the password
   alert("Password changed successfully!");
   closePasswordModal();
   return false;
@@ -148,7 +102,6 @@ function changePassword() {
 // On page load
 window.onload = () => {
   populateProfileFields();
-  renderReservations();
   
   // Add change password form submission handler
   document.getElementById('change-password-form').onsubmit = function(e) {

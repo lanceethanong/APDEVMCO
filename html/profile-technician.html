@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>User Profile - LabSlot</title>
+  <title>Technician Profile - LabSlot</title>
   <link rel="stylesheet" href="/css/dashboard.css" />
   <link rel="stylesheet" href="/css/profile.css" />
 </head>
@@ -12,9 +12,9 @@
     <!-- Header -->
     <header class="dashboard-header">
       <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
-      <div class="welcome-text">Welcome User</div>
+      <div class="welcome-text">Welcome Technician</div>
       <h1 class="site-title">LabSlot.Inc</h1>
-      <a href="profile.html" class="profile-link">
+      <a href="profile-technician.html" class="profile-link">
         <img src="/assets/profile.png" alt="Profile" class="profile-pic" />
       </a>
     </header>
@@ -27,6 +27,10 @@
           <button onclick="navigate('home')">
             <img src="/assets/home.png" alt="Home" />
             <span class="label">Home</span>
+          </button>
+          <button onclick="navigate('reservation')">
+            <img src="/assets/reservation.png" alt="Reservation List" />
+            <span class="label">Reservation List</span>
           </button>
           <button onclick="navigate('help')">
             <img src="/assets/help.png" alt="Help" />
@@ -61,11 +65,6 @@
                 <textarea id="about-text" readonly></textarea>
               </div>
             </div>
-          </div>
-
-          <div class="reservations">
-            <h3>My Reservations</h3>
-            <div id="reservations"></div>
           </div>
 
           <div class="account-actions">
@@ -115,7 +114,7 @@
     </div>
   </div>
 
-  <script src="../javascript/profile.js"></script>
+  <script src="../javascript/profile-technician.js"></script>
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
@@ -124,7 +123,10 @@
     function navigate(type) {
       switch (type) {
         case 'home':
-          window.location.href = 'dashboard.html';
+          window.location.href = 'technician-DashBoard.html';
+          break;
+        case 'reservation':
+          window.location.href = 'reservation.html';
           break;
         case 'logout':
           window.location.href = 'login.html';
