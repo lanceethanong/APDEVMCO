@@ -7,7 +7,7 @@ document.addEventListener('DOMContentLoaded', () => {
     { email: 'kingvon@dlsu.edu.ph', password: 'kingvon666', role: 'Student' },
     { email: 'sga@dlsu.edu.ph', password: 'droppedbyshaisaura', role: 'Student' },
     { email: 'admin123@dlsu.edu.ph', password: '@dmin123456', role: 'Technician' },
-    { email: 'juandelacruz@dlsu.edu.ph', password: '@dmin123456', role: 'Student' }
+    { email: 'juandelacruz@dlsu.edu.ph', password: 'joserizal1234 ', role: 'Student' }
   ];
 
   form.addEventListener('submit', function(event) {
