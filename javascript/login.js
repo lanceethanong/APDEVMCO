@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('login-form');
 
+  // Sample Users
   const allowedUsers = [
     { email: 'dlsustudent@dlsu.edu.ph', password: 'dlsu1234!', role: 'Student' },
     { email: 'kingvon@dlsu.edu.ph', password: 'kingvon666', role: 'Student' },
@@ -20,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const email = email_input.value.trim();
     const password = password_input.value;
 
-    // Check domain
+    // Check if user has a dlsu email
     if (!/@dlsu.edu.ph\s*$/.test(email)) {
       email_error.innerHTML = "Please enter your DLSU email address.";
       return;
