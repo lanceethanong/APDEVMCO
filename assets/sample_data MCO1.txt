@@ -51,12 +51,12 @@ Technician (radio button)
 
 User 5
 juandelacruz@dlsu.edu.ph (must have @dlsu.edu.ph)
-joserizal1234   (at least 8 characters)
+joserizal1234    (at least 8 characters)
 Student (radio button)
 
 Lab Classes
-Lab 1 CCPROG1 Slots 0/35
-Lab 2 ITISORG  Slots 0/35
-Lab 3 ST-CHIX  Slots 0/35
-Lab 4 CCINFOM  Slots 0/35
-Lab 5 CCAPDEV  Slots 0/35
+Lab 1 CCPROG3 Slots 0/35
+Lab 2 CCAPDEV Slots 0/35
+Lab 3 STCHUIX Slots 0/35
+Lab 4 ITNET04  Slots 0/35
+Lab 5 CSARCH2 Slots 0/35
