@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Redirect based on role
     if (user.role === 'Technician') {
-      window.location.href = 'TechnicianDash.html';
+      window.location.href = 'technician-dashboard.html';
     } else {
       window.location.href = 'DashBoard.html';
     }
