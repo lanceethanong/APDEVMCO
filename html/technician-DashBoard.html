@@ -98,6 +98,10 @@
 
   <script src="../javascript/dashboard.js"></script>
   <script>
+    document.getElementById("reserveBtn").onclick = () => {
+        window.location.href = "confirm-technician.html";
+    }
+
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
     }
