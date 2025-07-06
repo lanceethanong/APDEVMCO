@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Technician Profile - LabSlot</title>
+  <link rel="stylesheet" href="../../css/dashboard.css" />
+  <link rel="stylesheet" href="../../css/profile.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <div class="menu-toggle" onclick="toggleSidebar()">☰</div>
+      <div class="welcome-text">Welcome Technician</div>
+      <h1 class="site-title">LabSlot.Inc</h1>
+      <a href="profile-technician.html" class="profile-link">
+        <img src="../../assets/profile.png" alt="Profile" class="profile-pic" />
+      </a>
+    </header>
+
+    <!-- Main Section -->
+    <div class="dashboard-main">
+      <!-- Sidebar -->
+      <aside class="sidebar collapsed" id="sidebar">
+        <nav>
+          <button onclick="navigate('home')">
+            <img src="../../assets/home.png" alt="Home" />
+            <span class="label">Home</span>
+          </button>
+          <button onclick="navigate('reservation')">
+            <img src="../../assets/reservation.png" alt="Reservation List" />
+            <span class="label">Reservation List</span>
+          </button>
+          <button onclick="navigate('help')">
+            <img src="../../assets/help.png" alt="Help" />
+            <span class="label">Help</span>
+          </button>
+          <button onclick="navigate('logout')">
+            <img src="../../assets/logout.png" alt="Logout" />
+            <span class="label">Logout</span>
+          </button>
+        </nav>
+      </aside>
+
+      <!-- Main Page Content -->
+      <main class="content">
+        <section class="profile-section">
+          <div class="profile-header">
+            <div class="profile-left">
+              <div class="profile-card-portrait">
+                <div class="profile-photo">
+                  <img src="../../assets/profile.png" alt="Profile Photo" />
+                </div>
+                <div class="profile-info" id="profile-fields"></div>
+              </div>
+            </div>
+
+            <div class="profile-right">
+              <div class="edit-buttons" id="edit-buttons">
+                <button onclick="enableEditMode()">Edit Profile</button>
+              </div>
+              <div class="about-section">
+                <h3>About Me</h3>
+                <textarea id="about-text" readonly></textarea>
+              </div>
+            </div>
+          </div>
+
+          <div class="account-actions">
+            <h3>Account Actions</h3>
+            <button onclick="openPasswordModal()">Change Password</button>
+            <button onclick="deleteAccount()">Delete Account</button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- Footer -->
+    <footer class="dashboard-footer">
+      © 2025 LabSlot.Inc All rights reserved.
+    </footer>
+  </div>
+
+  <!-- Password Change Modal -->
+  <div id="password-modal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closePasswordModal()">&times;</span>
+      <h2>Change Password</h2>
+      <form id="change-password-form">
+        <div class="form-group">
+          <label for="old-password">Old Password</label>
+          <div class="password-input">
+            <input type="password" id="old-password" required />
+            <span class="toggle-password" onclick="togglePasswordVisibility('old-password')">👁</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="new-password">New Password</label>
+          <div class="password-input">
+            <input type="password" id="new-password" required />
+            <span class="toggle-password" onclick="togglePasswordVisibility('new-password')">👁</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="confirm-password">Confirm New Password</label>
+          <div class="password-input">
+            <input type="password" id="confirm-password" required />
+            <span class="toggle-password" onclick="togglePasswordVisibility('confirm-password')">👁</span>
+          </div>
+        </div>
+        <button type="submit" class="submit-btn">Change Password</button>
+      </form>
+    </div>
+  </div>
+
+  <script src="../../javascript/profile-technician.js"></script>
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+    //make this a partial(usable for multiple screens)
+    function navigate(type) {
+      switch (type) {
+        case 'home':
+          window.location.href = '/dashboard/technician';
+          break;
+        case 'reservation':
+          window.location.href = 'reservation.html';
+          break;
+        case 'logout':
+          window.location.href = '/login';
+          break;
+        case 'help':
+          window.location.href = '/dashboard/technician/help';
+          break;
+      }
+    }
+  </script>
+</body>
+</html>
