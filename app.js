@@ -11,10 +11,16 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json()); // Added for API routes
 app.use(express.static(path.join(__dirname, 'public'))); 
 
+const handlebars = exphbs.create({
+  extname: '.hbs',
+  layoutsDir: path.join(__dirname, 'views/layouts'),
+  partialsDir: path.join(__dirname, 'views/partials')
+});
+
 // Template engine setup
 app.engine('handlebars', exphbs.engine()); 
 app.set('view engine', 'handlebars'); 
-app.set('views', path.join(__dirname, 'views')); 
+
 
 // Database connection
 const connectDB = async () => {
@@ -30,28 +36,46 @@ const connectDB = async () => {
   }
 };
 
-// Routes
+//route for home page
 app.get('/', (req, res) => { 
-  res.sendFile(path.join(__dirname, 'views/html/home.html')); 
+  res.render(path.join(__dirname, 'views/handlebars/home.handlebars'),{
+    title: 'Home Page',
+    layout: 'homeLayout',
+      user: {
+      firstname: 'Richard'
+    }
+  }); 
 }); 
 
-// Authentication routes
+//route for login
 app.get('/login', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/login.html'));
+  res.render(path.join(__dirname, 'views/handlebars/login.handlebars'),{
+    title: 'Login',
+    layout: 'loginLayout'
+  });
 });
 
+//route for register 
 app.get('/register', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/register.html'));
+  res.render(path.join(__dirname, 'views/handlebars/register.handlebars'),{
+    title: 'Register',
+    layout: 'registerLayout'
+  });
 });
 
-// Dashboard routes
+//route for student dashboard
 app.get('/dashboard/student', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/DashBoard.html'));
+  res.render(path.join(__dirname, 'views/handlebars/dashboard-student.handlebars'),{
+  title: 'Student Dashboard',
+  layout: 'dashboard-students-Layout'
 });
-
+});
+//route for technician dashboard
 app.get('/dashboard/technician', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/html/technician-DashBoard.html'));
 });
+
+
 
 // Help routes
 app.get('/dashboard/student/help', (req, res) => {

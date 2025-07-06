@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}} - LabSlot</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    {{> dashboard-header user=first_name}}
+    
+    <div class="dashboard-main">
+      {{> dashboard-student-sidebar}}
+      
+      <main class="content">
+        {{{body}}}
+      </main>
+    </div>
+    
+    {{> footer}}
+  </div>
+
+  <script src="/javascript/dashboard.js"></script>
+</body>
+</html>
