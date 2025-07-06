@@ -17,7 +17,10 @@ const userSchema = new Schema({
         required: true,
     },
     description: String,
-    remember: Boolean,
+    remember:{
+        type: Boolean,
+        default: false,
+    }, 
     password:{
         type: String,
         required: true,
@@ -29,7 +32,7 @@ const userSchema = new Schema({
     role:{
         type: String,
         enum: ['Student', 'Lab Technician'],
-    }
+    },
 });
 
 module.exports = mongoose.model('User', userSchema);

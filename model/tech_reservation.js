@@ -29,6 +29,11 @@ const tech_reservationSchema = new Schema({
         ref: "users",
         required: true,
     },
+    status:{
+        type: String,
+        enum: ['Scheduled', 'Cancelled', 'In Progress', 'Completed'],
+        default: 'Scheduled',
+    },
 }, {timestamps: true});
 
 module.exports = mongoose.model('tech_reservation', tech_reservationSchema);

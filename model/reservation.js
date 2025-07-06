@@ -28,6 +28,11 @@ const reservationSchema = new Schema({
         type: Boolean,
         required: true,
     },
+    status:{
+        type: String,
+        enum:['Scheduled', 'Cancelled', 'In Progress', 'Completed'],
+        default: 'Scheduled',
+    },
 }, {timestamps: true});
 
 module.exports = mongoose.model('Reservation', reservationSchema);
