@@ -12,7 +12,10 @@ const userSchema = new Schema({
         type: String, 
         required: true,
     },
-    description: String,
+    description: {
+    type: String,
+    default: ''
+  },
     remember:{
         type: Boolean,
         default: false,
@@ -21,10 +24,11 @@ const userSchema = new Schema({
         type: String,
         required: true,
     },
-    picture:{
-        type: String,
-        required: true,
-    },
+    picture: {
+    type: String,
+    required: true,
+    default: 'picture.jpg'
+  },
     role:{
         type: String,
         enum: ['Student', 'Lab Technician'],

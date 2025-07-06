@@ -2,10 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
   const form = document.getElementById('register-form');
 
   form.addEventListener('submit', function (event) {
-    event.preventDefault();
-
     const password = document.getElementById('password');
-    const confirm = document.getElementById('confirm-password');
+    const confirm = document.getElementById('confirmPassword');
     const password_error = document.getElementById('confirm-password-error');
     const email_input = document.getElementById('email');
     const email_error = document.getElementById('emailError');
@@ -29,23 +27,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (password.value.length < 8) {
-      password_error.innerHTML = "Passwords must at least be 8 characters";
+      password_error.innerHTML = "Passwords must be at least 8 characters";
       isValid = false;
     }
 
-    // Validate role
     if (!role || !role.value) {
       alert("Please select a role.");
       isValid = false;
     }
 
-    // If all valid, redirect based on role
-    if (isValid) {
-      if (role.value === "student") {
-        window.location.href = "/dashboard/student";
-      } else if (role.value === "technician") {
-        window.location.href = "/dashboard/technician";
-      }
+    // Let form continue to submit if valid
+    if (!isValid) {
+      event.preventDefault(); // Only stop submission if invalid
     }
   });
 });

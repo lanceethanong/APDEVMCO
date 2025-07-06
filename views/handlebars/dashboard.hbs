@@ -1,0 +1,54 @@
+<div id="clock" class="clock"></div>
+
+<div class="dashboard-columns">
+  <div class="left-column">
+    <section class="rooms-section">
+      <h3>Available Rooms</h3>
+      <div class="rooms-list" id="rooms">
+        {{#each rooms}}
+          <div class="room-item" data-room-id="{{this.id}}">{{this.name}}</div>
+        {{/each}}
+      </div>
+    </section>
+  </div>
+
+  <div class="right-column">
+    <section class="calendar-section">
+      <div class="calendar-controls">
+        <button onclick="changeMonth(-1)">Prev</button>
+        <h2 id="monthLabel">{{currentMonth}}</h2>
+        <button onclick="changeMonth(1)">Next</button>
+      </div>
+      <div class="calendar-grid" id="calendar"></div>
+    </section>
+  </div>
+</div>
+
+<div class="seat-section">
+  <section class="seat-info">
+    <h3 id="selectedInfo">Seat availability at Lab Room: (not selected)</h3>
+  </section>
+
+  <div class="seat-legend">
+    <div><div class="legend unavailable"></div><span>Unavailable</span></div>
+    <div><div class="legend reserved"></div><span>Your Reservation/s</span></div>
+    <div><div class="legend available"></div><span>Available</span></div>
+  </div>
+
+  <div class="seat-table-wrapper">
+    <table class="seat-table" id="seatTable"></table>
+  </div>
+
+  <div class="action-button">
+  {{#if (eq role "Lab Technician")}}
+  <button id="reserveBtn" disabled>Reserve for Student</button>
+  {{else}}
+  <button id="reserveBtn" disabled>Reserve Slot</button>
+  {{/if}}
+</div>
+</div>
+<script>
+  document.getElementById("reserveBtn").onclick = () => {
+    window.location.href = "/dashboard/student/confirm";
+  }
+</script>

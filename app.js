@@ -5,85 +5,191 @@ const mongoose = require('mongoose');
 
 const app = express(); 
 const port = 3000; 
-
+const connectDB = require('./model/db');
 // Middleware
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json()); // Added for API routes
 app.use(express.static(path.join(__dirname, 'public'))); 
 
-const handlebars = exphbs.create({
+// Import models
+const User = require('./model/user');
+const Lab = require('./model/lab');
+const Reservation = require('./model/reservation');
+const TechReservation = require('./model/tech_reservation');
+const SeatList = require('./model/seat_list');
+const TechSeatList = require('./model/tech_seat_list');
+
+const hbs = exphbs.create({
   extname: '.hbs',
   layoutsDir: path.join(__dirname, 'views/layouts'),
-  partialsDir: path.join(__dirname, 'views/partials')
+  partialsDir: path.join(__dirname, 'views/partials'),
+  helpers: {
+    eq: (a, b) => a === b
+  }
 });
 
-// Template engine setup
-app.engine('handlebars', exphbs.engine()); 
-app.set('view engine', 'handlebars'); 
-
-
-// Database connection
-const connectDB = async () => {
-  try {
-    await mongoose.connect('mongodb://localhost:27017/lab_reservation', {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('MongoDB connected successfully');
-  } catch (error) {
-    console.error('Database connection failed:', error);
-    process.exit(1);
-  }
-};
+app.engine('hbs', hbs.engine);
+app.set('view engine', 'hbs');
 
 //route for home page
-app.get('/', (req, res) => { 
-  res.render(path.join(__dirname, 'views/handlebars/home.handlebars'),{
+app.get('/', (req, res) => {
+  res.render('handlebars/home', {
     title: 'Home Page',
     layout: 'homeLayout',
-      user: {
-      firstname: 'Richard'
-    }
-  }); 
-}); 
+    user: { username: 'Richard' }
+  });
+});
 
 //route for login
 app.get('/login', (req, res) => {
-  res.render(path.join(__dirname, 'views/handlebars/login.handlebars'),{
+  res.render('handlebars/login', {
     title: 'Login',
-    layout: 'loginLayout'
+    layout: 'login-signupLayout',
+    page: 'login'
   });
 });
 
-//route for register 
+
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (!user || user.password !== password) {
+      return res.status(401).render('handlebars/login', {
+        layout: 'login-signupLayout',
+        title: 'Login',
+        page: 'login',
+        loginError: 'Invalid email or password.'
+      });
+    }
+
+    const role = user.role;
+    const username = user.username;
+    // Match exact role strings
+    let redirectURL;
+    if (role === 'Lab Technician') {
+      redirectURL = `/dashboard/technician?username=${encodeURIComponent(username)}`;
+    } 
+    else if (role === 'Student') {
+      redirectURL = `/dashboard/student?username=${encodeURIComponent(username)}`;
+    } 
+    return res.redirect(redirectURL);
+
+  } catch (err) {
+    console.error('Login failed:', err);
+    return res.status(500).render('handlebars/login', {
+      layout: 'login-signupLayout',
+      title: 'Login',
+      page: 'login',
+      loginError: 'Server error. Please try again.'
+    });
+  }
+});
+
 app.get('/register', (req, res) => {
-  res.render(path.join(__dirname, 'views/handlebars/register.handlebars'),{
+  res.render('handlebars/register', {
     title: 'Register',
-    layout: 'registerLayout'
+    layout: 'login-signupLayout',
+    page: 'register'
   });
 });
 
-//route for student dashboard
+app.post('/register', async (req, res) => {
+  const { username, email, password, confirmPassword, role } = req.body;
+
+  // Ensure passwords match
+  if (password !== confirmPassword) {
+    return res.render('handlebars/register', {
+      layout: 'login-signupLayout',
+      title: 'Register',
+      page: 'register',
+      registerError: 'Passwords do not match.'
+    });
+  }
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.render('handlebars/register', {
+        layout: 'login-signupLayout',
+        title: 'Register',
+        page: 'register',
+        registerError: 'Email already in use.'
+      });
+    }
+
+    // Normalize role input
+    const normalizedRole = role === 'lab_technician' ? 'Lab Technician' : 'Student';
+
+    const newUser = new User({
+      username,
+      email,
+      password,
+      role: normalizedRole,
+      description: '',
+      picture: 'picture.jpg',
+      remember: false
+    });
+
+    await newUser.save();
+    console.log('New user registered:', newUser);
+
+    // Redirect based on role
+    const redirectURL = normalizedRole === 'Lab Technician'
+      ? `/dashboard/technician?username=${encodeURIComponent(username)}&role=${encodeURIComponent(normalizedRole)}`
+      : `/dashboard/student?username=${encodeURIComponent(username)}&role=${encodeURIComponent(normalizedRole)}`;
+
+    res.redirect(redirectURL);
+
+  } catch (err) {
+    console.error('Registration error:', err);
+    res.status(500).render('handlebars/register', {
+      layout: 'login-signupLayout',
+      title: 'Register',
+      page: 'register',
+      registerError: 'Something went wrong. Please try again.'
+    });
+  }
+});
+
 app.get('/dashboard/student', (req, res) => {
-  res.render(path.join(__dirname, 'views/handlebars/dashboard-student.handlebars'),{
-  title: 'Student Dashboard',
-  layout: 'dashboard-students-Layout'
+  const username = req.query.username || 'Student';
+  const role = req.query.role || 'Student';
+
+  res.render('handlebars/dashboard', {
+    title: 'Student Dashboard',
+    layout: 'dashboard-Layout',
+    username,
+    role,
+    rooms: [],
+  });
 });
-});
-//route for technician dashboard
+
 app.get('/dashboard/technician', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/technician-DashBoard.html'));
+  const username = req.query.username || 'Lab Technician';
+  const role = req.query.role || 'Lab Technician';
+
+  res.render('handlebars/dashboard', {
+    title: 'Technician Dashboard',
+    layout: 'dashboard-Layout',
+    username,
+    role,
+    rooms: [],
+  });
 });
 
 
+app.get('/dashboard/help', (req, res) => {
+  const { username, role } = req.query;
 
-// Help routes
-app.get('/dashboard/student/help', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/help.html'));
-});
-
-app.get('/dashboard/technician/help', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/technician-help.html'));
+  res.render('handlebars/help', {
+    layout: 'homeLayout', // Or whatever layout you're using that includes header/footer
+    title: 'Help & Support',
+    username,
+    role
+  });
 });
 
 // Profile routes
@@ -95,13 +201,7 @@ app.get('/dashboard/technician/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/html/profile-technician.html'));
 });
 
-// Import models
-const User = require('./model/user');
-const Lab = require('./model/lab');
-const Reservation = require('./model/reservation');
-const TechReservation = require('./model/tech_reservation');
-const SeatList = require('./model/seat_list');
-const TechSeatList = require('./model/tech_seat_list');
+
 
 // REST API Routes
 
@@ -281,8 +381,8 @@ app.delete('/api/reservations/:id', async (req, res) => {
 app.get('/api/tech-reservations', async (req, res) => {
   try {
     const reservations = await TechReservation.find()
-      .populate('technician', 'firstName lastName email')
-      .populate('student', 'firstName lastName email')
+      .populate('technician', 'username email')
+      .populate('student', 'username email')
       .populate('lab', 'class number');
     res.json(reservations);
   } catch (error) {

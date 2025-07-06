@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}} - LabSlot</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="../css/home.css">
+</head>
+<body data-role="{{role}}" data-username="{{username}}">
+  <div class="dashboard-layout">
+    {{> dashboard-header user=username role=role }}
+
+    <div class="dashboard-main">
+      {{> dashboard-sidebar role=role}}
+      <main class="content">
+        {{{body}}}
+      </main>
+    </div>
+    {{> footer }}
+  </div>
+
+<script>
+  function getRoleFromPage() {
+  return document.body.dataset.role || 'Student';
+}
+function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      if (sidebar) sidebar.classList.toggle('collapsed');
+    }
+function getRoleFromURL() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('role');
+}
+
+function navigate(type) {
+  const username = document.body.dataset.username;
+  const role = getRoleFromPage();
+
+  let basePath = '';
+
+  switch (type) {
+    case 'home':
+      basePath = role === 'Lab Technician' ? '/dashboard/technician' : '/dashboard/student';
+      break;
+    case 'reservation':
+      basePath = '/dashboard/reservation';
+      break;
+    case 'help':
+      basePath = role === 'Lab Technician' ? '/dashboard/technician/help' : '/dashboard/student/help';
+      break;
+    case 'logout':
+      window.location.href = '/';
+      return;
+  }
+
+  const query = [];
+  if (username) query.push(`username=${encodeURIComponent(username)}`);
+  if (role) query.push(`role=${encodeURIComponent(role)}`);
+
+  window.location.href = `${basePath}?${query.join('&')}`;
+}
+</script>
+
+
+
+  <script src="/javascript/dashboard.js"></script>
+</body>
+</html>
