@@ -6,13 +6,17 @@ let seatSelections = {};
 let currentMonth = new Date();
 let rooms = [];
 
-// Parse /lab/:number from URL
-function getLabNumberFromURL() {
-  const match = window.location.pathname.match(/^\/lab\/(\d+)$/);
-  return match ? parseInt(match[1], 10) : null;
+// Parse URL info like /dashboard/student/lab/1?username=George
+function getURLParams() {
+  const pathMatch = window.location.pathname.match(/\/dashboard\/(student|technician)(?:\/lab\/(\d+))?/);
+  const usernameParam = new URLSearchParams(window.location.search).get('username');
+  return {
+    role: pathMatch ? pathMatch[1] : 'student',
+    labNumber: pathMatch && pathMatch[2] ? parseInt(pathMatch[2], 10) : null,
+    username: usernameParam || ''
+  };
 }
 
-// Fetch labs from MongoDB
 async function fetchRoomsAndSelect() {
   try {
     const res = await fetch('/api/labs');
@@ -23,9 +27,9 @@ async function fetchRoomsAndSelect() {
       name: `Lab ${lab.number} (${lab.class})`
     }));
 
-    const labNumberFromURL = getLabNumberFromURL();
-    if (labNumberFromURL) {
-      const found = rooms.find(l => l.number === labNumberFromURL);
+    const { labNumber } = getURLParams();
+    if (labNumber) {
+      const found = rooms.find(l => l.number === labNumber);
       if (found) {
         selectedRoom = found.name;
         selectedLabNumber = found.number;
@@ -50,6 +54,8 @@ updateClock();
 function renderRooms() {
   const container = document.getElementById("rooms");
   container.innerHTML = "";
+  const { role, username } = getURLParams();
+
   rooms.forEach(lab => {
     const div = document.createElement("div");
     div.textContent = lab.name;
@@ -61,7 +67,7 @@ function renderRooms() {
       renderSeatInfo();
       renderSeats();
       updateReserveButton();
-      window.history.pushState({}, '', `/lab/${lab.number}`);
+      window.history.pushState({}, '', `/dashboard/${role}/lab/${lab.number}?username=${encodeURIComponent(username)}`);
     };
     container.appendChild(div);
   });
@@ -200,7 +206,6 @@ document.getElementById("reserveBtn").onclick = () => {
   window.location.href = "/dashboard/student/confirm";
 };
 
-// Load everything
 fetchRoomsAndSelect();
 renderMonth();
 renderCalendar();

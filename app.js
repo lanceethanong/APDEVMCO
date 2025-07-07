@@ -180,18 +180,42 @@ app.get('/dashboard/technician', (req, res) => {
   });
 });
 
+app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
+  const { role, labNumber } = req.params;
+  const username = req.query.username || 'Guest';
 
-app.get('/dashboard/help', (req, res) => {
-  const { username, role } = req.query;
-
-  res.render('handlebars/help', {
-    layout: 'homeLayout', 
-    title: 'Help & Support',
+  res.render('handlebars/dashboard', {
+    title: `${role} Dashboard`,
+    layout: 'dashboard-Layout',
     username,
-    role
+    role: role === 'technician' ? 'Lab Technician' : 'Student',
+    rooms: [], // labs will be fetched dynamically in frontend
+    selectedLabNumber: labNumber
   });
 });
 
+// Help pages per role
+app.get('/dashboard/technician/help', (req, res) => {
+  const { username } = req.query;
+
+  res.render('handlebars/help', {
+    layout: 'homeLayout',
+    title: 'Help & Support',
+    username,
+    role: 'Lab Technician'
+  });
+});
+
+app.get('/dashboard/student/help', (req, res) => {
+  const { username } = req.query;
+
+  res.render('handlebars/help', {
+    layout: 'homeLayout',
+    title: 'Help & Support',
+    username,
+    role: 'Student'
+  });
+});
 // Profile routes
 app.get('/dashboard/student/profile', (req, res) => {
   res.sendFile(path.join(__dirname, 'views/html/profile.html'));
