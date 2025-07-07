@@ -88,6 +88,7 @@ app.post('/login', async (req, res) => {
   }
 });
 
+//route for register
 app.get('/register', (req, res) => {
   res.render('handlebars/register', {
     title: 'Register',
@@ -154,6 +155,7 @@ app.post('/register', async (req, res) => {
   }
 });
 
+//route for dashboard student
 app.get('/dashboard/student', (req, res) => {
   const username = req.query.username || 'Student';
   const role = req.query.role || 'Student';
@@ -167,6 +169,7 @@ app.get('/dashboard/student', (req, res) => {
   });
 });
 
+//route for dashboard technician
 app.get('/dashboard/technician', (req, res) => {
   const username = req.query.username || 'Lab Technician';
   const role = req.query.role || 'Lab Technician';
@@ -179,6 +182,7 @@ app.get('/dashboard/technician', (req, res) => {
     rooms: [],
   });
 });
+
 
 app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
   const { role, labNumber } = req.params;
@@ -194,7 +198,7 @@ app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
   });
 });
 
-// Help pages per role
+//route for tech help
 app.get('/dashboard/technician/help', (req, res) => {
   const { username } = req.query;
 
@@ -206,6 +210,7 @@ app.get('/dashboard/technician/help', (req, res) => {
   });
 });
 
+//route for student help
 app.get('/dashboard/student/help', (req, res) => {
   const { username } = req.query;
 
@@ -216,15 +221,96 @@ app.get('/dashboard/student/help', (req, res) => {
     role: 'Student'
   });
 });
-// Profile routes
-app.get('/dashboard/student/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/profile.html'));
+
+//route for technician profile
+app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], async (req, res) => {
+  const username = req.query.username;
+
+  try {
+    const user = await User.findOne({ username, role: 'Lab Technician' });
+    
+    if (!user) {
+      return res.status(404).send('Technician not found');
+    }
+    
+    res.render('handlebars/profile', {
+      title: 'Technician Profile',
+      layout: 'profile-Layout',
+      picture: user.picture,
+      username: user.username,
+      role: user.role,
+      email: user.email,
+      description: user.description || '',
+      isTechnician: true
+    });
+  } catch (error) {
+    console.error('Technician profile error:', error);
+    res.status(500).send('Server error');
+  }
 });
 
-app.get('/dashboard/technician/profile', (req, res) => {
-  res.sendFile(path.join(__dirname, 'views/html/profile-technician.html'));
+//route for student profile
+app.get('/dashboard/student/profile', async (req, res) => {
+  const username = req.query.username;
+
+  try {
+    const user = await User.findOne({ username, role: 'Student' });
+    
+    if (!user) {
+      return res.status(404).send('Student not found');
+    }
+    
+    res.render('handlebars/profile', {
+      title: 'Student Profile',
+      layout: 'profile-Layout',
+      picture: user.picture,
+      username: user.username,
+      role: user.role,
+      email: user.email,
+      description: user.description || '',
+      isTechnician: false
+    });
+  } catch (error) {
+    console.error('Student profile error:', error);
+    res.status(500).send('Server error');
+  }
 });
 
+// Add this to your API routes in app.js
+// Add this with your other API routes in app.js
+// Delete user account API endpoint
+app.delete('/api/users/:username', async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    // 1. Find the user
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    // 2. Delete all related data based on role
+    if (user.role === 'Student') {
+      // Delete student reservations and seat assignments
+      await Reservation.deleteMany({ user: user._id });
+      await SeatList.deleteMany({ user: user._id });
+    } else if (user.role === 'Lab Technician') {
+      // Delete tech reservations and seat assignments
+      await TechReservation.deleteMany({ 
+        $or: [{ technician: user._id }, { student: user._id }] 
+      });
+      await TechSeatList.deleteMany({ technician: user._id });
+    }
+
+    // 3. Finally delete the user
+    await User.deleteOne({ _id: user._id });
+
+    res.json({ success: true, message: 'Account deleted successfully' });
+  } catch (error) {
+    console.error('Delete account error:', error);
+    res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
 
 
 // REST API Routes

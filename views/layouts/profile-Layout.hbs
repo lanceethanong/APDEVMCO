@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{{title}} - LabSlot</title>
+  <link rel="stylesheet" href="/css/dashboard.css" />
+  <link rel="stylesheet" href="/css/profile.css" />
+</head>
+<body>
+  <div class="dashboard-layout">
+    {{> dashboard-header username=username role=role}}
+    
+    <div class="dashboard-main">
+      {{> dashboard-sidebar role=role}}
+      
+      <main class="content">
+        <section class="profile-section">
+          <div class="profile-header">
+            <div class="profile-left">
+              <div class="profile-card-portrait">
+                <div class="profile-photo">
+                  <img src="/assets/profile.png" alt="Profile Photo" />
+                </div>
+                <div class="profile-info" id="profile-fields">
+                  <h2>{{username}}</h2>
+                  <p>{{role}}</p>
+                </div>
+              </div>
+            </div>
+
+            <div class="profile-right">
+              <div class="edit-buttons" id="edit-buttons">
+                <button onclick="enableEditMode()">Edit Profile</button>
+              </div>
+              <div class="about-section">
+                <h3>About Me</h3>
+                <textarea id="about-text" readonly>{{description}}</textarea>
+              </div>
+            </div>
+          </div>
+
+          {{#if (eq role "Student")}}
+          <div class="reservations">
+            <h3>My Reservations</h3>
+            <div id="reservations"></div>
+          </div>
+          {{/if}}
+
+          <div class="account-actions">
+            <h3>Account Actions</h3>
+            <button onclick="openPasswordModal()">Change Password</button>
+            <button onclick="showDeleteModal()">Delete Account</button>
+          </div>
+        </section>
+      </main>
+    </div>
+    {{> footer}}
+  </div>
+
+  <!-- Delete modal -->
+  <div id="delete-modal" class="delete-modal">
+    <div class="delete-modal-content">
+      <h2>Confirm Account Deletion</h2>
+      <p>Are you sure you want to delete your account? This action cannot be undone.</p>
+      <div class="delete-modal-actions">
+        <button onclick="hideDeleteModal()" class="cancel-btn">Cancel</button>
+        <button onclick="confirmDeleteAccount()" class="delete-btn">Delete Account</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/public/javascript/profile.js"></script>
+  <script>
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
+
+    function navigate(type) {
+      const username = '{{username}}';
+      const normalizedRole = '{{role}}'.toLowerCase().includes('technician') ? 'technician' : 'student';
+      
+      let basePath;
+      switch (type) {
+        case 'home':
+          basePath = `/dashboard/${normalizedRole}`;
+          break;
+        case 'reservation':
+          basePath = `/dashboard/${normalizedRole}/reservation`;
+          break;
+        case 'profile':
+          basePath = `/dashboard/${normalizedRole}/profile`;
+          break;
+        case 'logout':
+          window.location.href = '/login';
+          return;
+        case 'help':
+          basePath = `/dashboard/${normalizedRole}/help`;
+          break;
+        default:
+          basePath = `/dashboard/${normalizedRole}`;
+      }
+      
+      window.location.href = `${basePath}?username=${encodeURIComponent(username)}`;
+    }
+  </script>
+</body>
+</html>

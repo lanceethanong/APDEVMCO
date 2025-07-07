@@ -1,128 +1,77 @@
-let editMode = false;
-
-const profileData = {
-  name: "Juan Dela Cruz",
-  email: "juan.delacruz@dlsu.edu.ph",
-  role: "Student",
-  idNumber: "12345678",
-  contactNumber: "09123456789",
-  description: "Computer Science student specializing in AI",
-};
-
-const reservations = [
-  {
-    id: 1,
-    lab: "Lab 1 (CCPROG3)",
-    seat: "A12",
-    date: "2025-06-20",
-    time: "10:00-12:30"
-  },
-  {
-    id: 2,
-    lab: "Lab 3 (STCHUIX)",
-    seat: "B05",
-    date: "2025-06-22",
-    time: "14:00-16:00"
-  }
-];
-
-function populateProfileFields() {
-  const container = document.getElementById("profile-fields");
-  container.innerHTML = `
-    <h2>${profileData.name}</h2>
-    <p class="info">${profileData.role}</p>
-    <p class="info">${profileData.idNumber}</p>
-
-    <div class="profile-field">
-      <label>DLSU Email</label>
-      <p>${profileData.email}</p>
-    </div>
-
-    <div class="profile-field">
-      <label>Contact Number</label>
-      ${editMode
-        ? `<input type="tel" id="contactNumber" value="${profileData.contactNumber}" />`
-        : `<p>${profileData.contactNumber}</p>`}
-    </div>
-  `;
-
-  const about = document.getElementById("about-text");
-  about.readOnly = !editMode;
-  about.value = profileData.description;
-
-  updateEditButtons();
-}
-
+// Enable edit mode - shows editable fields
 function enableEditMode() {
-  editMode = true;
-  populateProfileFields();
+  // Make the about textarea editable
+  const aboutTextarea = document.getElementById('about-text');
+  aboutTextarea.readOnly = false;
+  aboutTextarea.style.backgroundColor = 'white';
+  aboutTextarea.style.border = '1px solid #ccc';
+  
+  // Change button text and functionality
+  const editButton = document.querySelector('#edit-buttons button');
+  editButton.textContent = 'Save Changes';
+  editButton.onclick = saveProfileChanges;
+  
+  // Add cancel button
+  const cancelButton = document.createElement('button');
+  cancelButton.textContent = 'Cancel';
+  cancelButton.onclick = cancelEditMode;
+  cancelButton.style.marginLeft = '10px';
+  document.getElementById('edit-buttons').appendChild(cancelButton);
 }
 
+// Cancel edit mode - reverts to display mode
 function cancelEditMode() {
-  editMode = false;
-  populateProfileFields();
-}
-
-function saveProfile() {
-  if (editMode) {
-    profileData.contactNumber = document.getElementById("contactNumber").value;
-    profileData.description = document.getElementById("about-text").value;
-    alert("Profile updated successfully!");
-    editMode = false;
-    populateProfileFields();
+  // Make the about textarea readonly again
+  const aboutTextarea = document.getElementById('about-text');
+  aboutTextarea.readOnly = true;
+  aboutTextarea.style.backgroundColor = 'transparent';
+  aboutTextarea.style.border = 'none';
+  
+  // Reset button
+  const editButton = document.querySelector('#edit-buttons button');
+  editButton.textContent = 'Edit Profile';
+  editButton.onclick = enableEditMode;
+  
+  // Remove cancel button
+  const cancelButton = document.querySelector('#edit-buttons button:last-child');
+  if (cancelButton && cancelButton.textContent === 'Cancel') {
+    cancelButton.remove();
   }
 }
 
-function updateEditButtons() {
-  const editButtons = document.getElementById("edit-buttons");
-  editButtons.innerHTML = editMode
-    ? `<button onclick="saveProfile()">Save Changes</button>
-       <button onclick="cancelEditMode()">Cancel</button>`
-    : `<button onclick="enableEditMode()">Edit Profile</button>`;
-}
-
-function editReservation(id) {
-  const reservation = reservations.find(r => r.id === id);
-  if (reservation) {
-    alert(`Editing reservation #${id}\nLab: ${reservation.lab}\nSeat: ${reservation.seat}\nDate: ${reservation.date}\nTime: ${reservation.time}`);
-    // In a real implementation, you would open a modal here to edit the reservation
+// Save profile changes to the server
+async function saveProfileChanges() {
+  const newAbout = document.getElementById('about-text').value;
+  
+  try {
+    // Get username from the page
+    const username = document.querySelector('.profile-info h2').textContent;
+    
+    const response = await fetch(`/api/users/${encodeURIComponent(username)}/profile`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        description: newAbout
+      })
+    });
+    
+    const result = await response.json();
+    
+    if (response.ok) {
+      alert('Profile updated successfully!');
+      cancelEditMode();
+    } else {
+      alert(result.error || 'Failed to update profile');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert('An error occurred while updating your profile');
   }
 }
 
-function cancelReservation(id) {
-  if (confirm("Are you sure you want to cancel this reservation?")) {
-    alert(`Reservation #${id} cancelled`);
-    // In a real implementation, you would remove the reservation from the array and update the UI
-  }
-}
-
-function renderReservations() {
-  const container = document.getElementById("reservations");
-  container.innerHTML = reservations
-    .map(
-      (r) => `
-    <div class="reservation-item">
-      <p><strong>Lab:</strong> ${r.lab}</p>
-      <p><strong>Seat:</strong> ${r.seat}</p>
-      <p><strong>Date:</strong> ${r.date}</p>
-      <p><strong>Time:</strong> ${r.time}</p>
-      <div class="reservation-actions">
-        <button class="edit-btn" onclick="editReservation(${r.id})">Edit</button>
-        <button class="cancel-btn" onclick="cancelReservation(${r.id})">Cancel</button>
-      </div>
-    </div>
-  `
-    )
-    .join("");
-}
-
-function deleteAccount() {
-  if (confirm("Are you sure you want to delete your account? This will cancel all your reservations.")) {
-    alert("Account deleted successfully!");
-    window.location.href = "login.html";
-  }
-}
-
+// Password change functionality
 function openPasswordModal() {
   document.getElementById('password-modal').style.display = 'block';
 }
@@ -137,7 +86,7 @@ function togglePasswordVisibility(fieldId) {
   field.type = field.type === 'password' ? 'text' : 'password';
 }
 
-function changePassword() {
+async function changePassword() {
   const oldPassword = document.getElementById('old-password').value;
   const newPassword = document.getElementById('new-password').value;
   const confirmPassword = document.getElementById('confirm-password').value;
@@ -152,17 +101,97 @@ function changePassword() {
     return false;
   }
 
-  alert("Password changed successfully!");
-  closePasswordModal();
+  try {
+    const username = document.querySelector('.profile-info h2').textContent;
+    
+    const response = await fetch(`/api/users/${encodeURIComponent(username)}/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        oldPassword,
+        newPassword
+      })
+    });
+
+    const result = await response.json();
+    
+    if (response.ok) {
+      alert("Password changed successfully!");
+      closePasswordModal();
+    } else {
+      alert(result.error || "Failed to change password");
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert("An error occurred while changing password");
+  }
+
   return false;
 }
 
-window.onload = () => {
-  populateProfileFields();
-  renderReservations();
+// Delete modal functions
+function showDeleteModal() {
+  document.getElementById('delete-modal').style.display = 'block';
+}
+
+function hideDeleteModal() {
+  document.getElementById('delete-modal').style.display = 'none';
+}
+
+async function confirmDeleteAccount() {
+  try {
+    // Get username from the profile page
+    const username = document.querySelector('.profile-info h2').textContent.trim();
+    
+    console.log('Attempting to delete user:', username); // Debug log
+    
+    const response = await fetch(`/api/users/${encodeURIComponent(username)}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+
+    const result = await response.json();
+    
+    if (response.ok) {
+      alert('Account deleted successfully');
+      // Redirect to login page
+      window.location.href = '/login';
+    } else {
+      console.error('Delete failed:', result); // Debug log
+      alert(result.error || 'Failed to delete account');
+      hideDeleteModal();
+    }
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    alert('An error occurred while deleting the account');
+    hideDeleteModal();
+  }
+}
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', () => {
+  // Set up password form submission
+  const passwordForm = document.getElementById('change-password-form');
+  if (passwordForm) {
+    passwordForm.onsubmit = function(e) {
+      e.preventDefault();
+      changePassword();
+    };
+  }
   
-  document.getElementById('change-password-form').onsubmit = function(e) {
-    e.preventDefault();
-    changePassword();
-  };
-};
+  // Set up edit profile button
+  const editButton = document.querySelector('#edit-buttons button');
+  if (editButton) {
+    editButton.onclick = enableEditMode;
+  }
+  
+  // Set up delete account button
+  const deleteBtn = document.querySelector('.account-actions button:last-of-type');
+  if (deleteBtn) {
+    deleteBtn.onclick = showDeleteModal;
+  }
+});

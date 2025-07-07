@@ -109,3 +109,56 @@ window.onload = () => {
     changePassword();
   };
 };
+
+// Add these functions to your existing profile-technician.js
+
+// Delete Account Functions
+// Delete Account Functions
+function showDeleteModal() {
+  document.getElementById('delete-modal').style.display = 'block';
+}
+
+function hideDeleteModal() {
+  document.getElementById('delete-modal').style.display = 'none';
+}
+
+async function confirmDeleteAccount() {
+  try {
+    const response = await fetch(`/api/users/${encodeURIComponent(profileData.name)}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
+      }
+    });
+
+    if (response.ok) {
+      alert('Account deleted successfully');
+      window.location.href = '/login';
+    } else {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to delete account');
+    }
+  } catch (error) {
+    console.error('Error:', error);
+    alert(error.message);
+    hideDeleteModal();
+  }
+}
+
+// Update the window.onload function
+window.onload = () => {
+  populateProfileFields();
+  
+  // Add change password form submission handler
+  document.getElementById('change-password-form').onsubmit = function(e) {
+    e.preventDefault();
+    changePassword();
+  };
+
+  // Set up delete account button
+  const deleteBtn = document.querySelector('.account-actions button:last-of-type');
+  if (deleteBtn) {
+    deleteBtn.onclick = showDeleteModal;
+  }
+};
