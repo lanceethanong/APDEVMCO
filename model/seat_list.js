@@ -14,6 +14,6 @@ const seat_listSchema = new Schema({
         type: Number,
         required: true,
     }
-});
+}, {timestamps: true});
 
 module.exports = mongoose.model('seat_list', seat_listSchema);

@@ -14,6 +14,6 @@ const tech_seat_listSchema = new Schema({
         type: mongoose.SchemaTypes.Int32,
         required: true,
     }
-});
+}, {timestamps: true});
 
 module.exports = mongoose.model('tech_seat_list', tech_seat_listSchema);

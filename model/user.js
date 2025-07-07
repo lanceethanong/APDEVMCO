@@ -33,6 +33,6 @@ const userSchema = new Schema({
         type: String,
         enum: ['Student', 'Lab Technician'],
     },
-});
+}, {timestamps: true});
 
 module.exports = mongoose.model('User', userSchema);

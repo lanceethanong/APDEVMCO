@@ -138,8 +138,8 @@ app.post('/register', async (req, res) => {
 
     // Redirect based on role
     const redirectURL = normalizedRole === 'Lab Technician'
-      ? `/dashboard/technician?username=${encodeURIComponent(username)}&role=${encodeURIComponent(normalizedRole)}`
-      : `/dashboard/student?username=${encodeURIComponent(username)}&role=${encodeURIComponent(normalizedRole)}`;
+      ? `/dashboard/technician?username=${encodeURIComponent(username)}}`
+      : `/dashboard/student?username=${encodeURIComponent(username)}}`;
 
     res.redirect(redirectURL);
 
@@ -185,7 +185,7 @@ app.get('/dashboard/help', (req, res) => {
   const { username, role } = req.query;
 
   res.render('handlebars/help', {
-    layout: 'homeLayout', // Or whatever layout you're using that includes header/footer
+    layout: 'homeLayout', 
     title: 'Help & Support',
     username,
     role

@@ -1,16 +1,43 @@
 // Dashboard logic (calendar + seat booking)
-const rooms = [
-  "Lab 1 (CCPROG3)",
-  "Lab 2 (CCAPDEV)",
-  "Lab 3 (STCHUIX)",
-  "Lab 4 (ITNET04)",
-  "Lab 5 (CSARCH2)"
-];
-
 let selectedRoom = null;
+let selectedLabNumber = null;
 let selectedDate = null;
 let seatSelections = {};
 let currentMonth = new Date();
+let rooms = [];
+
+// Parse /lab/:number from URL
+function getLabNumberFromURL() {
+  const match = window.location.pathname.match(/^\/lab\/(\d+)$/);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+// Fetch labs from MongoDB
+async function fetchRoomsAndSelect() {
+  try {
+    const res = await fetch('/api/labs');
+    const data = await res.json();
+    rooms = data.map(lab => ({
+      id: lab._id,
+      number: lab.number,
+      name: `Lab ${lab.number} (${lab.class})`
+    }));
+
+    const labNumberFromURL = getLabNumberFromURL();
+    if (labNumberFromURL) {
+      const found = rooms.find(l => l.number === labNumberFromURL);
+      if (found) {
+        selectedRoom = found.name;
+        selectedLabNumber = found.number;
+      }
+    }
+
+    renderRooms();
+  } catch (error) {
+    console.error('Failed to load labs:', error);
+    document.getElementById("rooms").innerHTML = "<p style='color:red'>Failed to load rooms</p>";
+  }
+}
 
 function updateClock() {
   const now = new Date();
@@ -23,16 +50,18 @@ updateClock();
 function renderRooms() {
   const container = document.getElementById("rooms");
   container.innerHTML = "";
-  rooms.forEach(room => {
+  rooms.forEach(lab => {
     const div = document.createElement("div");
-    div.textContent = room;
-    div.className = selectedRoom === room ? "selected" : "";
+    div.textContent = lab.name;
+    div.className = selectedRoom === lab.name ? "room-item selected" : "room-item";
     div.onclick = () => {
-      selectedRoom = room;
+      selectedRoom = lab.name;
+      selectedLabNumber = lab.number;
       renderRooms();
       renderSeatInfo();
       renderSeats();
       updateReserveButton();
+      window.history.pushState({}, '', `/lab/${lab.number}`);
     };
     container.appendChild(div);
   });
@@ -167,7 +196,11 @@ function updateReserveButton() {
   document.getElementById("reserveBtn").disabled = !(selectedRoom && selectedDate);
 }
 
-// Initial load
-renderRooms();
+document.getElementById("reserveBtn").onclick = () => {
+  window.location.href = "/dashboard/student/confirm";
+};
+
+// Load everything
+fetchRoomsAndSelect();
 renderMonth();
 renderCalendar();

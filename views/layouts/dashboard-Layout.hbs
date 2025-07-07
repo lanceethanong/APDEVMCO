@@ -56,7 +56,6 @@ function navigate(type) {
 
   const query = [];
   if (username) query.push(`username=${encodeURIComponent(username)}`);
-  if (role) query.push(`role=${encodeURIComponent(role)}`);
 
   window.location.href = `${basePath}?${query.join('&')}`;
 }

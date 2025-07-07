@@ -36,7 +36,6 @@ document.addEventListener('DOMContentLoaded', () => {
       isValid = false;
     }
 
-    // Let form continue to submit if valid
     if (!isValid) {
       event.preventDefault(); // Only stop submission if invalid
     }
