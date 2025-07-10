@@ -325,3 +325,41 @@ body, html {
   background-color: #9ca3af;
   cursor: not-allowed;
 }
+
+
+.search-container {
+  display: flex;
+  align-items: center;
+  margin: 0 20px;
+  flex-grow: 1;
+  max-width: 400px;
+}
+
+.search-input {
+  padding: 8px 15px;
+  border: 1px solid #ddd;
+  border-radius: 20px 0 0 20px;
+  font-size: 14px;
+  width: 100%;
+  outline: none;
+}
+
+.search-button {
+  padding: 8px 15px;
+  background-color: #059669;
+  color: white;
+  border: none;
+  border-radius: 0 20px 20px 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-button:hover {
+  background-color: #047857;
+}
+
+.welcome-text {
+  margin-right: auto;
+}

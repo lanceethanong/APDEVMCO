@@ -10,6 +10,51 @@ function getUsername() {
   return null;
 }
 
+// Search functionality
+let searchTimeout;
+
+async function searchUsers(query) {
+  if (!query || query.length < 2) {
+    document.getElementById('search-results').innerHTML = '';
+    return;
+  }
+
+  clearTimeout(searchTimeout);
+  
+  // Debounce the search to avoid too many requests
+  searchTimeout = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`);
+      const users = await response.json();
+      
+      const resultsContainer = document.getElementById('search-results');
+      if (users.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-result-item">No users found</div>';
+        return;
+      }
+      
+      resultsContainer.innerHTML = users.map(user => `
+        <div class="search-result-item" onclick="viewUserProfile('${user.username}')">
+          <img src="/assets/profile.png" alt="${user.username}" class="search-result-pic">
+          <div class="search-result-info">
+            <strong>${user.username}</strong>
+            <small>${user.email}</small>
+            <div class="user-role-badge">${user.role}</div>
+          </div>
+        </div>
+      `).join('');
+      
+    } catch (error) {
+      console.error('Search failed:', error);
+    }
+  }, 300);
+}
+
+function viewUserProfile(username) {
+  const currentRole = '{{role}}'.toLowerCase().includes('technician') ? 'technician' : 'student';
+  window.location.href = `/dashboard/${currentRole}/profile?username=${encodeURIComponent(username)}`;
+}
+
 // Delete Account Functions
 function showDeleteModal() {
   document.getElementById('delete-modal').style.display = 'block';
@@ -199,6 +244,25 @@ function togglePasswordVisibility(inputId) {
   input.type = input.type === 'password' ? 'text' : 'password';
 }
 
+// Close modals when clicking outside
+window.onclick = function(event) {
+  const deleteModal = document.getElementById('delete-modal');
+  if (event.target === deleteModal) {
+    hideDeleteModal();
+  }
+  
+  const passwordModal = document.getElementById('password-modal');
+  if (passwordModal && event.target === passwordModal) {
+    closePasswordModal();
+  }
+
+  // Close search results when clicking outside
+  const searchContainer = document.querySelector('.search-container');
+  if (searchContainer && !searchContainer.contains(event.target)) {
+    document.getElementById('search-results').innerHTML = '';
+  }
+};
+
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
   // Make sure buttons are properly bound
@@ -213,3 +277,10 @@ document.addEventListener('DOMContentLoaded', function() {
   // Debug output
   console.log('Profile page initialized. Username:', getUsername());
 });
+
+// Make functions available globally
+window.searchUsers = searchUsers;
+window.viewUserProfile = viewUserProfile;
+window.showDeleteModal = showDeleteModal;
+window.hideDeleteModal = hideDeleteModal;
+window.enableEditMode = enableEditMode;

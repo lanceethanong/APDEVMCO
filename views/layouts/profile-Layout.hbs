@@ -124,5 +124,12 @@
   window.username = '{{username}}' !== '{{username}}' ? '{{username}}' : 
     document.querySelector('.profile-info h2')?.textContent.trim();
 </script>
+
+
+<script>
+  // Make search functions available globally
+  window.searchUsers = searchUsers;
+  window.viewUserProfile = viewUserProfile;
+</script>
 </body>
 </html>

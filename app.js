@@ -227,6 +227,7 @@ app.get('/dashboard/student/help', (req, res) => {
 // Technician profile route
 app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], async (req, res) => {
   const username = req.query.username;
+  //debugging
   console.log('Technician profile - username from query:', username);
   
   try {
@@ -251,6 +252,7 @@ app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile']
 // Student profile route
 app.get('/dashboard/student/profile', async (req, res) => {
   const username = req.query.username;
+  // debugging
   console.log('Student profile - username from query:', username);
   
   try {
@@ -272,8 +274,11 @@ app.get('/dashboard/student/profile', async (req, res) => {
   }
 });
 
+
+// REST API Routes
+
+
 // Add this to your API routes in app.js
-// Update the delete endpoint
 app.delete('/api/users/:username', async (req, res) => {
   try {
     const { username } = req.params;
@@ -343,8 +348,26 @@ app.put('/api/users/:username', async (req, res) => {
   }
 });
 
+//search api
+app.get('/api/users/search/:query', async (req, res) => {
+  try {
+    const { query } = req.params;
+    const decodedQuery = decodeURIComponent(query);
+    
+    // Search by username or email (case insensitive)
+    const users = await User.find({
+      $or: [
+        { username: { $regex: decodedQuery, $options: 'i' } },
+        { email: { $regex: decodedQuery, $options: 'i' } }
+      ]
+    }).select('-password');
 
-// REST API Routes
+    res.json(users);
+  } catch (error) {
+    console.error('Search error:', error);
+    res.status(500).json({ error: 'Failed to perform search' });
+  }
+});
 
 // Labs API
 app.get('/api/labs', async (req, res) => {

@@ -206,6 +206,7 @@ document.getElementById("reserveBtn").onclick = () => {
   window.location.href = "/dashboard/student/confirm";
 };
 
+
 fetchRoomsAndSelect();
 renderMonth();
 renderCalendar();
