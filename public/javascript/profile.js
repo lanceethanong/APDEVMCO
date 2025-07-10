@@ -14,8 +14,11 @@ function getUsername() {
 let searchTimeout;
 
 async function searchUsers(query) {
+  const resultsContainer = document.getElementById('search-results');
+  
   if (!query || query.length < 2) {
-    document.getElementById('search-results').innerHTML = '';
+    resultsContainer.innerHTML = '';
+    resultsContainer.classList.remove('show');
     return;
   }
 
@@ -27,9 +30,9 @@ async function searchUsers(query) {
       const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`);
       const users = await response.json();
       
-      const resultsContainer = document.getElementById('search-results');
       if (users.length === 0) {
         resultsContainer.innerHTML = '<div class="search-result-item">No users found</div>';
+        resultsContainer.classList.add('show');
         return;
       }
       
@@ -44,8 +47,12 @@ async function searchUsers(query) {
         </div>
       `).join('');
       
+      resultsContainer.classList.add('show');
+      
     } catch (error) {
       console.error('Search failed:', error);
+      resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
+      resultsContainer.classList.add('show');
     }
   }, 300);
 }
@@ -101,8 +108,8 @@ function enableEditMode() {
   
   const editButtons = document.getElementById('edit-buttons');
   editButtons.innerHTML = `
-    <button onclick="saveProfileChanges()">Save Changes</button>
-    <button onclick="cancelEditMode()">Cancel</button>
+    <button onclick="saveProfileChanges()" class="save-btn">Save Changes</button>
+    <button onclick="cancelEditMode()" class="cancel-btn">Cancel</button>
   `;
 }
 
@@ -111,7 +118,7 @@ function cancelEditMode() {
   aboutText.readOnly = true;
   
   const editButtons = document.getElementById('edit-buttons');
-  editButtons.innerHTML = `<button onclick="enableEditMode()">Edit Profile</button>`;
+  editButtons.innerHTML = `<button onclick="enableEditMode()" class="edit-btn">Edit Profile</button>`;
 }
 
 async function saveProfileChanges() {
@@ -180,6 +187,7 @@ function createPasswordModal() {
             <input type="password" id="new-password" required minlength="8">
             <span class="toggle-password" onclick="togglePasswordVisibility('new-password')">👁️</span>
           </div>
+          <small class="password-hint">Minimum 8 characters</small>
         </div>
         <div class="form-group">
           <label for="confirm-password">Confirm New Password</label>
@@ -188,7 +196,10 @@ function createPasswordModal() {
             <span class="toggle-password" onclick="togglePasswordVisibility('confirm-password')">👁️</span>
           </div>
         </div>
-        <button type="submit" class="submit-btn">Change Password</button>
+        <div class="form-actions">
+          <button type="button" onclick="closePasswordModal()" class="cancel-btn">Cancel</button>
+          <button type="submit" class="submit-btn">Change Password</button>
+        </div>
       </form>
     </div>
   `;
@@ -214,6 +225,11 @@ async function changePassword() {
   
   if (newPassword !== confirmPassword) {
     alert('New passwords do not match!');
+    return;
+  }
+  
+  if (newPassword.length < 8) {
+    alert('Password must be at least 8 characters long');
     return;
   }
   
@@ -257,9 +273,10 @@ window.onclick = function(event) {
   }
 
   // Close search results when clicking outside
-  const searchContainer = document.querySelector('.search-container');
-  if (searchContainer && !searchContainer.contains(event.target)) {
-    document.getElementById('search-results').innerHTML = '';
+  if (!event.target.closest('.search-wrapper') && !event.target.closest('#search-results')) {
+    const resultsContainer = document.getElementById('search-results');
+    resultsContainer.innerHTML = '';
+    resultsContainer.classList.remove('show');
   }
 };
 
@@ -267,15 +284,24 @@ window.onclick = function(event) {
 document.addEventListener('DOMContentLoaded', function() {
   // Make sure buttons are properly bound
   document.getElementById('edit-buttons').innerHTML = `
-    <button onclick="enableEditMode()">Edit Profile</button>
+    <button onclick="enableEditMode()" class="edit-btn">Edit Profile</button>
   `;
   
   // Add event listeners for account actions
   document.querySelector('.account-actions button:first-of-type').onclick = openPasswordModal;
   document.querySelector('.account-actions button:last-of-type').onclick = showDeleteModal;
   
-  // Debug output
-  console.log('Profile page initialized. Username:', getUsername());
+  // Add input event listener to close search results when input is cleared
+  const searchInput = document.getElementById('user-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function() {
+      if (this.value.length < 2) {
+        const resultsContainer = document.getElementById('search-results');
+        resultsContainer.innerHTML = '';
+        resultsContainer.classList.remove('show');
+      }
+    });
+  }
 });
 
 // Make functions available globally
@@ -284,3 +310,10 @@ window.viewUserProfile = viewUserProfile;
 window.showDeleteModal = showDeleteModal;
 window.hideDeleteModal = hideDeleteModal;
 window.enableEditMode = enableEditMode;
+window.cancelEditMode = cancelEditMode;
+window.saveProfileChanges = saveProfileChanges;
+window.confirmDeleteAccount = confirmDeleteAccount;
+window.openPasswordModal = openPasswordModal;
+window.closePasswordModal = closePasswordModal;
+window.changePassword = changePassword;
+window.togglePasswordVisibility = togglePasswordVisibility;
