@@ -21,11 +21,14 @@ async function fetchRoomsAndSelect() {
   try {
     const res = await fetch('/api/labs');
     const data = await res.json();
+
     rooms = data.map(lab => ({
       id: lab._id,
       number: lab.number,
       name: `Lab ${lab.number} (${lab.class})`
     }));
+
+    rooms.sort((a, b) => a.number - b.number);
 
     const { labNumber } = getURLParams();
     if (labNumber) {
@@ -156,45 +159,55 @@ function renderSeats() {
   table.appendChild(header);
 
   const tbody = document.createElement("tbody");
-  for (let seat = 0; seat < 35; seat++) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `<td>Seat ${seat + 1}</td>`;
 
-    for (let slot = 0; slot < slots; slot++) {
-      const td = document.createElement("td");
-      const slotKey = `${seat}-${slot}`;
+  const rows = 7;
+  const cols = 5;
 
-      let isPast = false;
-      if (isToday) {
-        const hour = 7 + Math.floor(slot / 2);
-        const min = slot % 2 === 0 ? 0 : 30;
-        isPast = now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= min);
+  for (let row = 0; row < rows; row++) {
+    for (let col = 0; col < cols; col++) {
+      const seatNum = row * cols + col + 1;
+      if (seatNum > 35) break;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td>Seat ${seatNum}</td>`;
+
+      for (let slot = 0; slot < slots; slot++) {
+        const td = document.createElement("td");
+        const slotKey = `r${row + 1}-c${col + 1}-s${slot}`;
+
+        let isPast = false;
+        if (isToday) {
+          const hour = 7 + Math.floor(slot / 2);
+          const min = slot % 2 === 0 ? 0 : 30;
+          isPast = now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= min);
+        }
+
+        const disabled = !selectedRoom || !selectedDate || isPast;
+
+        td.className = disabled
+          ? "disabled"
+          : selected.has(slotKey)
+          ? "reserved"
+          : "available";
+
+        td.onclick = () => {
+          if (disabled) return;
+          if (!seatSelections[key]) seatSelections[key] = new Set();
+          if (seatSelections[key].has(slotKey)) {
+            seatSelections[key].delete(slotKey);
+          } else {
+            seatSelections[key].add(slotKey);
+          }
+          renderSeats();
+        };
+
+        tr.appendChild(td);
       }
 
-      const disabled = !selectedRoom || !selectedDate || isPast;
-
-      td.className = disabled
-        ? "disabled"
-        : selected.has(slotKey)
-        ? "reserved"
-        : "available";
-
-      td.onclick = () => {
-        if (disabled) return;
-        if (!seatSelections[key]) seatSelections[key] = new Set();
-        if (seatSelections[key].has(slotKey)) {
-          seatSelections[key].delete(slotKey);
-        } else {
-          seatSelections[key].add(slotKey);
-        }
-        renderSeats();
-      };
-
-      tr.appendChild(td);
+      tbody.appendChild(tr);
     }
-
-    tbody.appendChild(tr);
   }
+
   table.appendChild(tbody);
 }
 
@@ -205,7 +218,6 @@ function updateReserveButton() {
 document.getElementById("reserveBtn").onclick = () => {
   window.location.href = "/dashboard/student/confirm";
 };
-
 
 fetchRoomsAndSelect();
 renderMonth();

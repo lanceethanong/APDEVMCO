@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const seat_listSchema = new Schema({
     reservation:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "reservations",
+        ref: "Reservation",
     },
     row:{
         type: Number,

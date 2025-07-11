@@ -6,6 +6,7 @@
   <title>{{title}} - LabSlot</title>
   <link rel="stylesheet" href="/css/dashboard.css" />
   <link rel="stylesheet" href="../css/home.css">
+  <link rel="stylesheet" href="/css/reservation.css">
 </head>
 <body data-role="{{role}}" data-username="{{username}}">
   <div class="dashboard-layout">
@@ -43,8 +44,8 @@ function navigate(type) {
     case 'home':
       basePath = role === 'Lab Technician' ? '/dashboard/technician' : '/dashboard/student';
       break;
-    case 'reservation':
-      basePath = '/dashboard/reservation';
+      case 'reservation-list':
+      basePath = '/dashboard/technician/reservation-list';
       break;
     case 'help':
       basePath = role === 'Lab Technician' ? '/dashboard/technician/help' : '/dashboard/student/help';

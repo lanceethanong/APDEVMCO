@@ -6,6 +6,7 @@
   <title>{{title}} - LabSlot</title>
   <link rel="stylesheet" href="/css/dashboard.css" />
   <link rel="stylesheet" href="/css/profile.css" />
+  <link rel="stylesheet" href="/css/reservation.css" />
 </head>
 <body>
   <div class="dashboard-layout">
@@ -41,17 +42,66 @@
           </div>
 
           {{#if (eq role "Student")}}
-          <div class="reservations">
-            <h3>My Reservations</h3>
-            <div id="reservations"></div>
+  <div class="reservations">
+    <h3 style="margin-bottom: 20px;">My Reservations</h3>
+    <h4>Current Reservations</h4>
+    {{#if upcomingReservations.length}}
+      <div class="reservation-list">
+        {{#each upcomingReservations}}
+          <div class="reservation-box">
+            <div class="info">
+              <p><strong>Seat:</strong> Row {{row}}, Column {{column}}</p>
+              <p><strong>Lab:</strong> {{lab}}</p>
+              <p><strong>Date:</strong> {{date}}</p>
+              <p><strong>Time:</strong> {{time_start}} - {{time_end}}</p>
+              <p><strong>Status:</strong> 
+                <span class="status {{statusClass status}}">{{status}}</span>
+              </p>
+            </div>
+            <div class="actions">
+              <button class="edit-btn">Edit</button>
+              {{#if showDelete}}
+                <button class="delete-btn">Delete</button>
+              {{else}}
+                <button class="delete-btn disabled" disabled>Delete</button>
+              {{/if}}
+            </div>
           </div>
-          {{/if}}
+        {{/each}}
+      </div>
+      {{else}}
+      No current reservations. 
+    {{/if}}
 
-          <div class="account-actions">
-            <h3>Account Actions</h3>
-            <button onclick="openPasswordModal()">Change Password</button>
-            <button onclick="showDeleteModal()">Delete Account</button>
+    <h4 style="margin-top: 20px;">Past Reservations</h4>
+    {{#if pastReservations.length}}
+      <div class="reservation-list">
+        {{#each pastReservations}}
+          <div class="reservation-box">
+            <div class="info">
+              <p><strong>Seat:</strong> Row {{row}}, Column {{column}}</p>
+              <p><strong>Lab:</strong> {{lab}}</p>
+              <p><strong>Date:</strong> {{date}}</p>
+              <p><strong>Time:</strong> {{time_start}} - {{time_end}}</p>
+              <p><strong>Status:</strong> 
+                <span class="status {{statusClass status}}">{{status}}</span>
+              </p>
+            </div>
           </div>
+        {{/each}}
+      </div>
+      {{else}}
+      No past reservations. 
+    {{/if}}
+  </div>
+{{/if}}
+
+<!-- Account actions should be outside the Student-only block -->
+<div class="account-actions">
+  <h3>Account Actions</h3>
+  <button onclick="openPasswordModal()">Change Password</button>
+  <button onclick="showDeleteModal()">Delete Account</button>
+</div>
         </section>
       </main>
     </div>
@@ -85,8 +135,8 @@
         case 'home':
           basePath = `/dashboard/${normalizedRole}`;
           break;
-        case 'reservation':
-          basePath = `/dashboard/${normalizedRole}/reservation`;
+        case 'reservation-list':
+          basePath = `/dashboard/technician/reservation-list`;
           break;
         case 'profile':
           basePath = `/dashboard/${normalizedRole}/profile`;

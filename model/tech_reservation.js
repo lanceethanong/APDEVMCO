@@ -17,7 +17,7 @@ const tech_reservationSchema = new Schema({
     },
     lab:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "labs",
+        ref: "Lab",
         required: true,
     },
     date:{
@@ -26,7 +26,7 @@ const tech_reservationSchema = new Schema({
     },
     student:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "users",
+        ref: "User",
         required: true,
     },
     status:{

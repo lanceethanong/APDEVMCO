@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 const tech_seat_listSchema = new Schema({
     reservation:{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "tech_reservations",
+        ref: "tech_reservation",
     },
     row:{
         type: mongoose.SchemaTypes.Int32,
