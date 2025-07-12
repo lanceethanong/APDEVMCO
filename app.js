@@ -294,21 +294,35 @@ app.get('/dashboard/student/profile', async (req, res) => {
       return start - now <= 10 * 60 * 1000;
     };
 
-    const now = new Date();
-    const getStatus = (resv) => {
-      const [sh, sm] = resv.time_start.split(':').map(Number);
-      const [eh, em] = resv.time_end.split(':').map(Number);
-      const start = new Date(resv.date);
-      const end = new Date(resv.date);
-      start.setHours(sh, sm);
-      end.setHours(eh, em);
-      if (resv.status === 'Cancelled') return 'Cancelled';
-      if (now < start) return 'Scheduled';
-      if (now >= start && now <= end) return 'In Progress';
-      return 'Completed';
-    };
+    function parseLocalDateTime(dateInput, timeStr) {
+  const [year, month, day] = new Date(dateInput).toISOString().split('T')[0].split('-').map(Number);
 
-    // Fetch student and tech reservations
+  const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
+  if (!match) return new Date();
+
+  let hour = parseInt(match[1], 10);
+  const minute = match[2] ? parseInt(match[2], 10) : 0;
+  const ampm = match[3].toUpperCase();
+
+  if (ampm === 'PM' && hour !== 12) hour += 12;
+  if (ampm === 'AM' && hour === 12) hour = 0;
+
+  return new Date(year, month - 1, day, hour, minute, 0, 0);
+}
+
+function getStatus(resv) {
+  if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
+
+  const start = parseLocalDateTime(resv.date, resv.time_start);
+  const end = parseLocalDateTime(resv.date, resv.time_end);
+  const now = new Date();
+
+  if (resv.status === 'Cancelled') return 'Cancelled';
+  if (now < start) return 'Scheduled';
+  if (now >= start && now <= end) return 'In Progress';
+  return 'Completed';
+}
+
     const [studentSeats, techSeats] = await Promise.all([
       SeatList.find().populate({
         path: 'reservation',
@@ -364,7 +378,6 @@ app.get('/dashboard/student/profile', async (req, res) => {
       });
     }
 
-    // Sort and separate
     allReservations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     const pastReservations = allReservations.filter(r => ['Completed', 'Cancelled'].includes(r.status));
     const upcomingReservations = allReservations.filter(r => !['Completed', 'Cancelled'].includes(r.status));
@@ -393,18 +406,13 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
       return res.status(403).send('Unauthorized access');
     }
 
-    
     const getShowDelete = (resv) => {
       if (!resv || !resv.time_start || !resv.date) return false;
-
       const [sh, sm] = resv.time_start.split(':').map(Number);
       const start = new Date(resv.date);
       start.setHours(sh, sm, 0, 0);
-
       const now = new Date();
-      const diffMs = start - now;
-
-      return diffMs <= 10 * 60 * 1000; // 10 minutes
+      return start - now <= 10 * 60 * 1000;
     };
 
     const [studentSeats, techSeats] = await Promise.all([
@@ -424,28 +432,45 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
       }).lean()
     ]);
 
-    const isPast = new Date(r.date) < new Date();
-    const now = new Date();
+    function parseLocalDateTime(dateInput, timeStr) {
+  const date = new Date(dateInput);
 
-    const getStatus = (resv) => {
-      const [sh, sm] = resv.time_start.split(':').map(Number);
-      const [eh, em] = resv.time_end.split(':').map(Number);
-      const start = new Date(resv.date);
-      const end = new Date(resv.date);
-      start.setHours(sh, sm);
-      end.setHours(eh, em);
+  const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
+  if (!match) return date;
 
-      if (resv.status === 'Cancelled') return 'Cancelled';
-      if (now < start) return 'Scheduled';
-      if (now >= start && now <= end) return 'In Progress';
-      return 'Completed';
-    };
+  let hour = parseInt(match[1], 10);
+  const minute = match[2] ? parseInt(match[2], 10) : 0;
+  const ampm = match[3].toUpperCase();
+
+  if (ampm === 'PM' && hour !== 12) hour += 12;
+  if (ampm === 'AM' && hour === 12) hour = 0;
+
+  date.setHours(hour, minute, 0, 0);
+  return date;
+}
+
+function getStatus(resv) {
+  if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
+
+  const start = parseLocalDateTime(resv.date, resv.time_start);
+  const end = parseLocalDateTime(resv.date, resv.time_end);
+  const now = new Date();
+
+  if (resv.status === 'Cancelled') return 'Cancelled';
+  if (now < start) return 'Scheduled';
+  if (now >= start && now <= end) return 'In Progress';
+  return 'Completed';
+}
 
     const combined = [];
 
+    // 🧾 Student Reservations
     for (const seat of studentSeats) {
       const r = seat.reservation;
       if (!r || !r.user || !r.lab) continue;
+
+      const status = getStatus(r);
+      const isPast = status === 'Completed' || status === 'Cancelled';
 
       combined.push({
         _id: r._id,
@@ -457,16 +482,20 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
         time_end: r.time_end,
         date: r.date.toISOString().split('T')[0],
         createdAt: r.createdAt.toLocaleString(),
-        status: getStatus(r),
+        status,
         showDelete: getShowDelete(r),
         type: 'student',
         isPast
       });
     }
 
+    // 🧾 Tech Reservations
     for (const seat of techSeats) {
       const r = seat.reservation;
       if (!r || !r.student || !r.lab) continue;
+
+      const status = getStatus(r);
+      const isPast = status === 'Completed' || status === 'Cancelled';
 
       combined.push({
         _id: r._id,
@@ -478,7 +507,7 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
         time_end: r.time_end,
         date: r.date.toISOString().split('T')[0],
         createdAt: r.createdAt.toLocaleString(),
-        status: getStatus(r),
+        status,
         showDelete: getShowDelete(r),
         type: 'technician',
         isPast
@@ -500,6 +529,7 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
     res.status(500).send('Server error loading reservation list.');
   }
 });
+
 
 // View profile route (read-only)
 app.get('/dashboard/view-profile/:username', async (req, res) => {

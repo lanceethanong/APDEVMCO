@@ -12,16 +12,18 @@
         <p><strong>Created At:</strong> {{createdAt}}</p>
         <p class="status"><strong>Status:</strong> <span class="status {{statusClass status}}">{{status}}</span></p>
       </div>
-          {{#unless isPast}}
-          <div class="actions">
-            <button class="edit-btn">Edit</button>
-            {{#if showDelete}}
-              <button class="delete-btn">Delete</button>
-            {{else}}
-              <button class="delete-btn disabled" disabled>Delete</button>
-            {{/if}}
-          </div>
-        {{/unless}}
+
+      {{#unless isPast}}
+        <div class="actions">
+          <button class="edit-btn">Edit</button>
+          {{#if showDelete}}
+            <button class="delete-btn">Delete</button>
+          {{else}}
+            <button class="delete-btn disabled" disabled>Delete</button>
+          {{/if}}
+        </div>
+      {{/unless}}
+
     </div>
   {{/each}}
 </div>
