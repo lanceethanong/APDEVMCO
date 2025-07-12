@@ -43,7 +43,6 @@ app.get('/', (req, res) => {
   res.render('handlebars/home', {
     title: 'Home Page',
     layout: 'homeLayout',
-    user: { username: 'Richard' }
   });
 });
 
@@ -253,7 +252,9 @@ app.get('/dashboard/student/help', (req, res) => {
 app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], async (req, res) => {
   const username = req.query.username;
   //debugging
+  /*
   console.log('Technician profile - username from query:', username);
+  */
   
   try {
     const user = await User.findOne({ username, role: 'Lab Technician' });
@@ -497,6 +498,134 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
   } catch (err) {
     console.error('Failed to load reservation list:', err);
     res.status(500).send('Server error loading reservation list.');
+  }
+});
+
+// View profile route (read-only)
+app.get('/dashboard/view-profile/:username', async (req, res) => {
+  const { username } = req.params;
+  const currentUsername = req.query.username;
+  const decodedUsername = decodeURIComponent(username);
+
+  try {
+    // Get both users' data
+    const [currentUser, viewedUser] = await Promise.all([
+      User.findOne({ username: currentUsername }),
+      User.findOne({ username: decodedUsername })
+    ]);
+
+    if (!currentUser || !viewedUser) {
+      return res.status(404).send('User not found');
+    }
+
+    // Redirect to regular profile if viewing own profile
+    if (currentUser.username === viewedUser.username) {
+      return res.redirect(`/dashboard/${currentUser.role.toLowerCase()}/profile?username=${encodeURIComponent(currentUsername)}`);
+    }
+
+    // Fetch reservations if viewing a student profile as a technician
+    let upcomingReservations = [];
+    let pastReservations = [];
+    
+    if (currentUser.role === 'Lab Technician' && viewedUser.role === 'Student') {
+      const getStatus = (resv) => {
+        if (!resv || !resv.time_start || !resv.date) return 'Unknown';
+        const [sh, sm] = resv.time_start.split(':').map(Number);
+        const [eh, em] = resv.time_end.split(':').map(Number);
+        const start = new Date(resv.date);
+        const end = new Date(resv.date);
+        start.setHours(sh, sm);
+        end.setHours(eh, em);
+        const now = new Date();
+        
+        if (resv.status === 'Cancelled') return 'Cancelled';
+        if (now < start) return 'Scheduled';
+        if (now >= start && now <= end) return 'In Progress';
+        return 'Completed';
+      };
+
+      const [studentSeats, techSeats] = await Promise.all([
+        SeatList.find().populate({
+          path: 'reservation',
+          populate: [
+            { path: 'user', select: 'username' },
+            { path: 'lab', select: 'class number' }
+          ]
+        }).lean(),
+        TechSeatList.find().populate({
+          path: 'reservation',
+          populate: [
+            { path: 'student', select: 'username' },
+            { path: 'lab', select: 'class number' }
+          ]
+        }).lean()
+      ]);
+
+      const allReservations = [];
+
+      // Regular reservations
+      for (const seat of studentSeats) {
+        const r = seat.reservation;
+        if (!r || !r.user || r.user.username !== viewedUser.username) continue;
+
+        allReservations.push({
+          _id: r._id,
+          row: seat.row,
+          column: seat.column,
+          lab: `Lab ${r.lab.number} (${r.lab.class})`,
+          time_start: r.time_start,
+          time_end: r.time_end,
+          date: r.date.toISOString().split('T')[0],
+          status: getStatus(r),
+          type: 'student'
+        });
+      }
+
+      // Tech-made reservations
+      for (const seat of techSeats) {
+        const r = seat.reservation;
+        if (!r || !r.student || r.student.username !== viewedUser.username) continue;
+
+        allReservations.push({
+          _id: r._id,
+          row: seat.row,
+          column: seat.column,
+          lab: `Lab ${r.lab.number} (${r.lab.class})`,
+          time_start: r.time_start,
+          time_end: r.time_end,
+          date: r.date.toISOString().split('T')[0],
+          status: getStatus(r),
+          type: 'technician'
+        });
+      }
+
+      // Sort and separate
+      allReservations.sort((a, b) => new Date(b.date) - new Date(a.date));
+      pastReservations = allReservations.filter(r => ['Completed', 'Cancelled'].includes(r.status));
+      upcomingReservations = allReservations.filter(r => !['Completed', 'Cancelled'].includes(r.status));
+    }
+
+    res.render('handlebars/viewprofile', {
+      title: `${viewedUser.username}'s Profile`,
+      layout: 'dashboard-Layout',
+      username: currentUser.username, // Current user's username for the header
+      role: currentUser.role,        // Current user's role for the header
+      currentUser: {
+        username: currentUser.username,
+        role: currentUser.role
+      },
+      viewedUser: {
+        username: viewedUser.username,
+        role: viewedUser.role,
+        description: viewedUser.description || ''
+      },
+      upcomingReservations,
+      pastReservations
+    });
+
+  } catch (error) {
+    console.error('View profile error:', error);
+    res.status(500).send('Server error');
   }
 });
 // REST API Routes

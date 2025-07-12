@@ -5,6 +5,7 @@ let selectedDate = null;
 let seatSelections = {};
 let currentMonth = new Date();
 let rooms = [];
+let searchTimeout; // Added for search functionality
 
 // Parse URL info like /dashboard/student/lab/1?username=George
 function getURLParams() {
@@ -17,6 +18,59 @@ function getURLParams() {
   };
 }
 
+// Search functionality
+async function searchUsers(query) {
+  const resultsContainer = document.getElementById('search-results');
+  
+  if (!query || query.length < 2) {
+    resultsContainer.innerHTML = '';
+    resultsContainer.classList.remove('show');
+    return;
+  }
+
+  clearTimeout(searchTimeout);
+  
+  searchTimeout = setTimeout(async () => {
+    try {
+      const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`);
+      const users = await response.json();
+      
+      if (users.length === 0) {
+        resultsContainer.innerHTML = '<div class="search-result-item">No users found</div>';
+        resultsContainer.classList.add('show');
+        return;
+      }
+      
+      resultsContainer.innerHTML = users.map(user => `
+        <div class="search-result-item" data-username="${user.username}" onclick="viewUserProfile('${user.username}')">
+          <img src="/assets/profile.png" alt="${user.username}" class="search-result-pic">
+          <div class="search-result-info">
+            <strong>${user.username}</strong>
+            <small>${user.email}</small>
+            <div class="user-role-badge">${user.role}</div>
+          </div>
+        </div>
+      `).join('');
+      
+      resultsContainer.classList.add('show');
+      
+    } catch (error) {
+      console.error('Search failed:', error);
+      resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
+      resultsContainer.classList.add('show');
+    }
+  }, 300);
+}
+
+function viewUserProfile(username) {
+  const currentRole = document.body.dataset.role.includes('Technician') ? 'technician' : 'student';
+  const currentUsername = document.body.dataset.username;
+  
+  // Navigate to the selected user's profile with current user as viewer
+  window.location.href = `/dashboard/view-profile/${encodeURIComponent(username)}?username=${encodeURIComponent(currentUsername)}`;
+}
+
+// Rest of the existing dashboard functions...
 async function fetchRoomsAndSelect() {
   try {
     const res = await fetch('/api/labs');
@@ -219,6 +273,34 @@ document.getElementById("reserveBtn").onclick = () => {
   window.location.href = "/dashboard/student/confirm";
 };
 
-fetchRoomsAndSelect();
-renderMonth();
-renderCalendar();
+// Initialize everything
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize search input
+  const searchInput = document.getElementById('user-search-input');
+  if (searchInput) {
+    searchInput.addEventListener('input', function(e) {
+      searchUsers(e.target.value);
+    });
+  }
+
+  // Close search results when clicking outside
+  document.addEventListener('click', function(event) {
+    if (!event.target.closest('.search-wrapper') && !event.target.closest('#search-results')) {
+      const resultsContainer = document.getElementById('search-results');
+      if (resultsContainer) {
+        resultsContainer.innerHTML = '';
+        resultsContainer.classList.remove('show');
+      }
+    }
+  });
+
+  // Initialize dashboard components
+  fetchRoomsAndSelect();
+  renderMonth();
+  renderCalendar();
+  updateClock();
+});
+
+// Make search functions available globally
+window.searchUsers = searchUsers;
+window.viewUserProfile = viewUserProfile;

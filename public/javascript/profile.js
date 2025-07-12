@@ -6,13 +6,18 @@ function getUsername() {
     return usernameElement.textContent.trim();
   }
   
-  console.error('Could not determine username from DOM');
+  // Fallback to URL parameter
+  const urlParams = new URLSearchParams(window.location.search);
+  const usernameParam = urlParams.get('username');
+  if (usernameParam) {
+    return usernameParam;
+  }
+
+  console.error('Could not determine username from DOM or URL');
   return null;
 }
 
 // Search functionality
-let searchTimeout;
-
 async function searchUsers(query) {
   const resultsContainer = document.getElementById('search-results');
   
@@ -24,7 +29,6 @@ async function searchUsers(query) {
 
   clearTimeout(searchTimeout);
   
-  // Debounce the search to avoid too many requests
   searchTimeout = setTimeout(async () => {
     try {
       const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`);
@@ -37,7 +41,7 @@ async function searchUsers(query) {
       }
       
       resultsContainer.innerHTML = users.map(user => `
-        <div class="search-result-item" onclick="viewUserProfile('${user.username}')">
+        <div class="search-result-item" data-username="${user.username}">
           <img src="/assets/profile.png" alt="${user.username}" class="search-result-pic">
           <div class="search-result-info">
             <strong>${user.username}</strong>
@@ -55,11 +59,6 @@ async function searchUsers(query) {
       resultsContainer.classList.add('show');
     }
   }, 300);
-}
-
-function viewUserProfile(username) {
-  const currentRole = '{{role}}'.toLowerCase().includes('technician') ? 'technician' : 'student';
-  window.location.href = `/dashboard/${currentRole}/profile?username=${encodeURIComponent(username)}`;
 }
 
 // Delete Account Functions
@@ -271,42 +270,23 @@ window.onclick = function(event) {
   if (passwordModal && event.target === passwordModal) {
     closePasswordModal();
   }
-
-  // Close search results when clicking outside
-  if (!event.target.closest('.search-wrapper') && !event.target.closest('#search-results')) {
-    const resultsContainer = document.getElementById('search-results');
-    resultsContainer.innerHTML = '';
-    resultsContainer.classList.remove('show');
-  }
 };
 
 // Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  // Make sure buttons are properly bound
-  document.getElementById('edit-buttons').innerHTML = `
-    <button onclick="enableEditMode()" class="edit-btn">Edit Profile</button>
-  `;
-  
-  // Add event listeners for account actions
-  document.querySelector('.account-actions button:first-of-type').onclick = openPasswordModal;
-  document.querySelector('.account-actions button:last-of-type').onclick = showDeleteModal;
-  
-  // Add input event listener to close search results when input is cleared
+  // Initialize edit buttons based on profile ownership
+  const editButtons = document.getElementById('edit-buttons');
   const searchInput = document.getElementById('user-search-input');
-  if (searchInput) {
-    searchInput.addEventListener('input', function() {
-      if (this.value.length < 2) {
-        const resultsContainer = document.getElementById('search-results');
-        resultsContainer.innerHTML = '';
-        resultsContainer.classList.remove('show');
-      }
-    });
-  }
+
+  // Add event listeners for account actions
+  const changePassBtn = document.querySelector('.account-actions button:first-of-type');
+  const deleteAccountBtn = document.querySelector('.account-actions button:last-of-type');
+  
+  if (changePassBtn) changePassBtn.onclick = openPasswordModal;
+  if (deleteAccountBtn) deleteAccountBtn.onclick = showDeleteModal;
 });
 
 // Make functions available globally
-window.searchUsers = searchUsers;
-window.viewUserProfile = viewUserProfile;
 window.showDeleteModal = showDeleteModal;
 window.hideDeleteModal = hideDeleteModal;
 window.enableEditMode = enableEditMode;

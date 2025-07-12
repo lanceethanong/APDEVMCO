@@ -8,7 +8,7 @@
   <link rel="stylesheet" href="/css/profile.css" />
   <link rel="stylesheet" href="/css/reservation.css" />
 </head>
-<body>
+<body data-role="{{role}}" data-username="{{username}}">
   <div class="dashboard-layout">
     {{> dashboard-header username=username role=role}}
     
@@ -119,8 +119,6 @@
       </div>
     </div>
   </div>
-
-  <script src="/public/javascript/profile.js"></script>
   <script>
     function toggleSidebar() {
       document.getElementById('sidebar').classList.toggle('collapsed');
@@ -155,31 +153,47 @@
     }
   </script>
 <script src="/javascript/profile.js"></script>
-<script>
-  // Make sure these functions are globally available
-  window.showDeleteModal = showDeleteModal;
-  window.hideDeleteModal = hideDeleteModal;
-  window.confirmDeleteAccount = confirmDeleteAccount;
-  window.enableEditMode = enableEditMode;
-  // ... other functions you need globally
-</script>
-<script>
-  console.log('Template variables:', {
-    username: '{{username}}',
-    role: '{{role}}',
-    description: '{{description}}'
-  });
-  
-  // Make sure username is available globally
-  window.username = '{{username}}' !== '{{username}}' ? '{{username}}' : 
-    document.querySelector('.profile-info h2')?.textContent.trim();
-</script>
+  <script src="/javascript/dashboard.js"></script>
+  <script>
+    // Make sure these functions are globally available
+    window.showDeleteModal = showDeleteModal;
+    window.hideDeleteModal = hideDeleteModal;
+    window.confirmDeleteAccount = confirmDeleteAccount;
+    window.enableEditMode = enableEditMode;
+    window.searchUsers = searchUsers;
+    window.viewUserProfile = viewUserProfile;
+    
+    function toggleSidebar() {
+      document.getElementById('sidebar').classList.toggle('collapsed');
+    }
 
-
-<script>
-  // Make search functions available globally
-  window.searchUsers = searchUsers;
-  window.viewUserProfile = viewUserProfile;
-</script>
+    function navigate(type) {
+      const username = '{{username}}';
+      const normalizedRole = '{{role}}'.toLowerCase().includes('technician') ? 'technician' : 'student';
+      
+      let basePath;
+      switch (type) {
+        case 'home':
+          basePath = `/dashboard/${normalizedRole}`;
+          break;
+        case 'reservation-list':
+          basePath = `/dashboard/technician/reservation-list`;
+          break;
+        case 'profile':
+          basePath = `/dashboard/${normalizedRole}/profile`;
+          break;
+        case 'logout':
+          window.location.href = '/login';
+          return;
+        case 'help':
+          basePath = `/dashboard/${normalizedRole}/help`;
+          break;
+        default:
+          basePath = `/dashboard/${normalizedRole}`;
+      }
+      
+      window.location.href = `${basePath}?username=${encodeURIComponent(username)}`;
+    }
+  </script>
 </body>
 </html>
