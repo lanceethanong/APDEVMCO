@@ -300,7 +300,27 @@ function updateReserveButton() {
 }
 
 document.getElementById("reserveBtn").onclick = () => {
-  window.location.href = "/dashboard/student/confirm";
+  // Convert the set to an array
+  const slotArray = Array.from(seatSelections);
+
+  // Send POST request to the server
+  fetch("/api/reservations", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(slotArray)
+  })
+  .then(response => {
+    if (!response.ok) throw new Error("Request failed");
+    return response.json();
+  })
+  .then(data => {
+    console.log("Server response:", data);
+  })
+  .catch(error => {
+    console.error("Error sending slots:", error);
+  });
 };
 
 // Initialize everything

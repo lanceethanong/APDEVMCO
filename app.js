@@ -192,14 +192,6 @@ app.get('/dashboard/student', (req, res) => {
   });
 });
 
-// route for student confirmation
-app.get('/dashboard/student/confirm', (req, res) => {
-  res.render('handlebars/confirm', {
-    title: 'Confirm Reservation',
-    layout: 'dashboard-Layout',
-  });
-});
-
 //route for dashboard technician
 app.get('/dashboard/technician', (req, res) => {
   const username = req.query.username || 'Lab Technician';
@@ -211,14 +203,6 @@ app.get('/dashboard/technician', (req, res) => {
     username,
     role,
     rooms: [],
-  });
-});
-
-// route for technician confirmation
-app.get('/dashboard/technician/confirm', (req, res) => {
-  res.render('handlebars/confirm-technician', {
-    title: 'Confirm Reservation',
-    layout: 'dashboard-Layout',
   });
 });
 
@@ -544,7 +528,6 @@ function getStatus(resv) {
     res.status(500).send('Server error loading reservation list.');
   }
 });
-
 
 // View profile route (read-only)
 app.get('/dashboard/view-profile/:username', async (req, res) => {
