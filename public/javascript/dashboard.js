@@ -191,6 +191,16 @@ function getKey() {
   return `${new Date(selectedDate).toISOString().split("T")[0]}_${selectedRoom}`;
 }
 
+function timeToIndex(apiTime) { // converts a time string from the API (e.g "8 AM") into a slot index for rendering purposes
+  const time = apiTime.split(" ")[0].split(":");
+  let index = (apiTime == "7 PM") ? 24 : (time[0] < 7) ? (parseInt(time[0]) - 1) * 2 + 12 : (parseInt(time[0]) - 7) * 2;
+
+  if (time[1] == "30")
+    index++;
+
+  return index;
+}
+
 function renderSeatInfo() {
   document.getElementById("selectedInfo").textContent = `Seat availability at Lab Room: ${selectedRoom || "(not selected)"}`;
 }
@@ -205,6 +215,14 @@ function renderSeats() {
   const todayKey = new Date().toDateString();
   const isToday = todayKey === selectedDate;
   const selected = key && seatSelections[key] ? seatSelections[key] : new Set();
+
+  let reservationList = {};
+  const getReservations = new XMLHttpRequest();
+  getReservations.onload = function() {
+    reservationList = JSON.parse(this.responseText);
+  }
+  getReservations.open("GET", "/api/seat-lists", false);
+  getReservations.send();
 
   const header = document.createElement("thead");
   const headRow = document.createElement("tr");
@@ -225,6 +243,14 @@ function renderSeats() {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>Seat ${seatNum}</td>`;
 
+      let listMatch = 0;
+      while (listMatch != reservationList.length) {
+        if (((reservationList[listMatch].row - 1) == row && (reservationList[listMatch].column - 1) == col))
+          break;
+        else
+          listMatch++;
+      }
+
       for (let slot = 0; slot < slots; slot++) {
         const td = document.createElement("td");
         const slotKey = `r${row + 1}-c${col + 1}-s${slot}`;
@@ -236,13 +262,17 @@ function renderSeats() {
           isPast = now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= min);
         }
 
+        //const unavailable = (listMatch != reservationList.length) && (slot >= timeToIndex(reservationList[listMatch].reservation.time_start) && slot < timeToIndex(reservationList[listMatch].reservation.time_end) && selectedLabNumber == reservationList[listMatch].reservation.lab.number) && selectedDate == new Date(reservationList[listMatch].reservation.date).toDateString();
+        const unavailable = (listMatch != reservationList.length) && (slot >= timeToIndex(reservationList[listMatch].reservation.time_start) && slot < timeToIndex(reservationList[listMatch].reservation.time_end) && selectedLabNumber == reservationList[listMatch].reservation.lab.number) && selectedDate == new Date("2025-07-14T00:00:00.000Z").toDateString(); // disable date checks for now
         const disabled = !selectedRoom || !selectedDate || isPast;
 
-        td.className = disabled
-          ? "disabled"
-          : selected.has(slotKey)
-          ? "reserved"
-          : "available";
+        td.className = unavailable
+        ? "legend unavailable"
+        : disabled
+        ? "disabled"
+        : selected.has(slotKey)
+        ? "reserved"
+        : "available";
 
         td.onclick = () => {
           if (disabled) return;
