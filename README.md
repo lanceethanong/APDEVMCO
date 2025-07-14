@@ -1,3 +1,5 @@
+CCAPDEV Group 8 S17
+ 
  1. npm install mongodb
  2. install mongod: https://www.mongodb.com/docs/manual/administration/install-community/
  3. setup environment variables
