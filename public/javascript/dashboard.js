@@ -6,6 +6,7 @@ let seatSelections = {};
 let currentMonth = new Date();
 let rooms = [];
 let searchTimeout;
+let currentReservationList = [];
 
 // Technician Reservation Feature Variables
 let technicianSelectedStudent = null;
@@ -297,7 +298,7 @@ function renderRooms() {
       selectedLabNumber = lab.number;
       renderRooms();
       renderSeatInfo();
-      renderSeats();
+      fetchReservationList().then(renderSeats);
       updateReserveButton();
       window.history.pushState({}, '', `/dashboard/${role}/lab/${lab.number}?username=${encodeURIComponent(username)}`);
     };
@@ -344,7 +345,7 @@ function renderCalendar() {
         selectedDate = key;
         renderCalendar();
         renderSeatInfo();
-        renderSeats();
+        fetchReservationList().then(renderSeats);
         updateReserveButton();
       };
     }
@@ -354,6 +355,17 @@ function renderCalendar() {
     date.setDate(date.getDate() + 1);
   }
 }
+
+async function fetchReservationList() {
+  try {
+    const res = await fetch('/api/seat-lists');
+    currentReservationList = await res.json();
+  } catch (e){
+    currentReservationList = [];
+    console.error('Failed to fetch reservations:', e);
+  }
+}
+
 function getKey() {
   if (!selectedDate || !selectedRoom) return null;
   return `${new Date(selectedDate).toISOString().split("T")[0]}_${selectedRoom}`;
@@ -379,7 +391,6 @@ function renderSeatInfo() {
   document.getElementById("selectedInfo").textContent = `Seat availability at Lab Room: ${selectedRoom || "(not selected)"}`;
 }
 
-// ---------- FIX: LAB-AND-DATE-SPECIFIC SEAT AVAILABILITY ----------
 function renderSeats() {
   const table = document.getElementById("seatTable");
   table.innerHTML = "";
@@ -391,16 +402,8 @@ function renderSeats() {
   const isToday = todayKey === selectedDate;
   const selected = key && seatSelections[key] ? seatSelections[key] : new Set();
 
-  let reservationList = {};
-  const getReservations = new XMLHttpRequest();
-  getReservations.onload = function() {
-    reservationList = JSON.parse(this.responseText);
-  }
-  getReservations.open("GET", "/api/seat-lists", false);
-  getReservations.send();
-
-  // *** Only show reservations for the currently selected lab AND currently selected date ***
-  const filteredReservationList = Array.isArray(reservationList) ? reservationList.filter(seatObj => {
+  // Only show reservations for the currently selected lab AND currently selected date
+  const filteredReservationList = Array.isArray(currentReservationList) ? currentReservationList.filter(seatObj => {
     if (!seatObj.reservation || !seatObj.reservation.lab || !seatObj.reservation.date) return false;
     // Filter by lab
     let isLab =
@@ -471,7 +474,7 @@ function renderSeats() {
           } else {
             seatSelections[key].add(slotKey);
           }
-          renderSeats();
+          fetchReservationList().then(renderSeats);
         };
         tr.appendChild(td);
       }
@@ -606,7 +609,7 @@ document.getElementById("reserveBtn").onclick = async () => {
     alert("Reservation successful!");
     seatSelections[key] = new Set();
     if (typeof renderSeats === 'function') {
-      renderSeats();
+      fetchReservationList().then(renderSeats);
     }
     if (role === 'student') {
       window.location.href = `/dashboard/student/profile?username=${encodeURIComponent(actualUsername)}`;
@@ -626,7 +629,7 @@ document.getElementById("reserveBtn").onclick = async () => {
 };
 
 // Event Listeners
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
   // Main search bar
   const searchInput = document.getElementById('user-search-input');
   if (searchInput) {
@@ -661,6 +664,8 @@ document.addEventListener('DOMContentLoaded', function() {
   fetchRoomsAndSelect();
   renderMonth();
   renderCalendar();
+  await fetchReservationList();
+  renderSeats();
   updateClock();
   if (typeof setupTechnicianStudentUI === "function") setupTechnicianStudentUI();
 });
