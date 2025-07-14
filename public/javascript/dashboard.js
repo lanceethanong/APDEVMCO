@@ -343,75 +343,180 @@ function validateSlotSet(slotSet) {
   return result;
 }
 
-document.getElementById("reserveBtn").onclick = () => {
-  const slots = Array.from(seatSelections[getKey()]).sort();
-  const r = slots[0].charAt(1);
-  const c = slots[0].charAt(4);
-  
-  const start_slot = slots[0].charAt(7);
-  let end_slot = start_slot;
-
-  let result = true;
-
-  if (slots.length > 1) {
-    let i = 0;
+document.getElementById("reserveBtn").onclick = async () => {
+  try {
+    const key = getKey();
+    const slotSet = seatSelections[key];
     
-    while (i < slots.length && result) {
-      result = (slots[i].charAt(1) == r);
-      i++;
+    if (!slotSet || slotSet.size === 0) {
+      alert("Please select at least one seat and time slot.");
+      return;
     }
 
-    i = 0;
-    while (i < slots.length && result) {
-      result = (slots[i].charAt(4) == c);
-      i++;
+    console.log("Selected slots:", Array.from(slotSet));
+
+    const slotData = Array.from(slotSet).map(s => {
+      const match = s.match(/r(\d+)-c(\d+)-s(\d+)/);
+      if (!match) {
+        throw new Error(`Invalid slot format: ${s}`);
+      }
+      return {
+        row: parseInt(match[1], 10),
+        column: parseInt(match[2], 10),
+        slot: parseInt(match[3], 10)
+      };
+    });
+
+    console.log("Parsed slot data:", slotData);
+
+    // Group by seat
+    const seatGroups = {};
+    for (const s of slotData) {
+      const seatKey = `${s.row}_${s.column}`;
+      if (!seatGroups[seatKey]) seatGroups[seatKey] = [];
+      seatGroups[seatKey].push(s.slot);
     }
 
-    i = 1;
-    while (i < slots.length && result) {
-      result = ((parseInt(slots[i].charAt(7)) - 1) == parseInt(slots[i - 1].charAt(7)));
-      if (result)
-        end_slot++;
-      i++;
-    }
-  }
+    console.log("Seat groups:", seatGroups);
 
-  if (result) {
+    // Validate each seat has consecutive slots
+    for (const [seatKey, slots] of Object.entries(seatGroups)) {
+      const sorted = slots.sort((a, b) => a - b);
+      const isConsecutive = sorted.every((s, i, arr) => i === 0 || s === arr[i - 1] + 1);
+      if (!isConsecutive) {
+        const [row, col] = seatKey.split('_').map(Number);
+        const seatNum = (row - 1) * 5 + col;
+        alert(`Slots for Seat ${seatNum} must be consecutive.`);
+        return;
+      }
+    }
+
+    // Determine global start and end slot
+    const allSlots = slotData.map(s => s.slot);
+    const globalStartSlot = Math.min(...allSlots);
+    const globalEndSlot = Math.max(...allSlots) + 1;
+
+    console.log("Global slots:", { start: globalStartSlot, end: globalEndSlot });
+
+    const seats = Object.keys(seatGroups).map(key => {
+      const [row, column] = key.split('_').map(Number);
+      return { row, column };
+    });
+
+    console.log("Seats array:", seats);
+
+    const { username, labNumber } = getURLParams();
+    
+    // Validate required parameters
+    if (!username) {
+      alert("Username is required");
+      return;
+    }
+    
+    if (!labNumber) {
+      alert("Lab number is required");
+      return;
+    }
+
+    // Check if selectedDate is defined
+    if (typeof selectedDate === 'undefined') {
+      alert("Please select a date");
+      return;
+    }
+
+    const anonymity = document.getElementById('anonymityToggle')?.checked || false;
+
+    // Validate slotToTime function exists
+    if (typeof slotToTime !== 'function') {
+      alert("Time conversion function not available");
+      return;
+    }
+
     const request = {
-      time_start: slotToTime(start_slot),
-      time_end: slotToTime(end_slot),
-      user: getURLParams().username, // ObjectId to be determined server-side
-      lab: getURLParams().labNumber, // ObjectId to be determined server-side
+      time_start: slotToTime(globalStartSlot),
+      time_end: slotToTime(globalEndSlot),
+      user: username,
+      lab: labNumber,
       date: new Date(selectedDate),
-      anonymity: false,
-      seats: {row: parseInt(r), column: parseInt(c)},
+      anonymity,
+      seats
     };
-    console.log(request);
 
-    fetch("/api/reservations", {
+    console.log("Request payload:", JSON.stringify(request, null, 2));
+
+    // Disable button to prevent double-clicking
+    const reserveBtn = document.getElementById("reserveBtn");
+    const originalText = reserveBtn.textContent;
+    reserveBtn.disabled = true;
+    reserveBtn.textContent = "Processing...";
+
+    const response = await fetch("/api/reservations", {
       method: "POST",
-      headers: {
+      headers: { 
         "Content-Type": "application/json"
       },
       body: JSON.stringify(request)
-    })
-    .then(response => {
-      if (!response.ok) throw new Error("Request failed");
-      console.log(response.json());
-    })
-    .then(data => {
-      console.log("Server response:", data);
-    })
-    .catch(error => {
-      alert("Failed to reserve slots. Please try again.");
-      console.error("Error sending slots:", error);
     });
+
+    console.log("Response status:", response.status);
+    console.log("Response ok:", response.ok);
+
+    if (!response.ok) {
+      let errorMessage = `HTTP ${response.status}`;
+      
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorData.error || errorMessage;
+        console.error("Server error data:", errorData);
+      } catch (e) {
+        try {
+          errorMessage = await response.text();
+          console.error("Server error text:", errorMessage);
+        } catch (e2) {
+          errorMessage = `HTTP ${response.status} - ${response.statusText}`;
+        }
+      }
+      
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    console.log("Success response:", data);
+    
+    alert("Reservation successful!");
+    
+    // Clear selections
+    seatSelections[key] = new Set();
+    
+    // Re-render seats if function exists
+    if (typeof renderSeats === 'function') {
+      renderSeats();
+    }
+
+    // Get role for redirect
+    const { role } = getURLParams();
+    
+    // Redirect based on role
+    if (role === 'student') {
+      window.location.href = `/dashboard/student/profile?username=${encodeURIComponent(username)}`;
+    } else {
+      window.location.href = `/dashboard/technician/reservation-list?username=${encodeURIComponent(username)}`;
+    }
+    
+  } catch (error) {
+    console.error("Full error object:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
+    alert(`Failed to reserve slots: ${error.message}`);
+  } finally {
+    // Re-enable button
+    const reserveBtn = document.getElementById("reserveBtn");
+    if (reserveBtn) {
+      reserveBtn.disabled = false;
+      reserveBtn.textContent = "Reserve"; // or whatever the original text was
+    }
   }
-
-  else
-    alert("Only one reservation can be made at a time. Please make sure your selected slots are consecutive and belong to the same seat.");
-}
-
+};
 // Initialize everything
 document.addEventListener('DOMContentLoaded', function() {
   // Initialize search input
