@@ -1,12 +1,9 @@
-// Utility function to get username reliably
 function getUsername() {
-  // Try to get from DOM first
   const usernameElement = document.querySelector('.profile-info h2');
   if (usernameElement) {
     return usernameElement.textContent.trim();
   }
   
-  // Fallback to URL parameter
   const urlParams = new URLSearchParams(window.location.search);
   const usernameParam = urlParams.get('username');
   if (usernameParam) {
@@ -17,7 +14,6 @@ function getUsername() {
   return null;
 }
 
-// Search functionality
 async function searchUsers(query) {
   const resultsContainer = document.getElementById('search-results');
   
@@ -61,7 +57,6 @@ async function searchUsers(query) {
   }, 300);
 }
 
-// Delete Account Functions
 function showDeleteModal() {
   document.getElementById('delete-modal').style.display = 'block';
 }
@@ -99,7 +94,6 @@ async function confirmDeleteAccount() {
   }
 }
 
-// Edit Profile Functions
 function enableEditMode() {
   const aboutText = document.getElementById('about-text');
   aboutText.readOnly = false;
@@ -151,7 +145,6 @@ async function saveProfileChanges() {
   }
 }
 
-// Password Change Functions
 function openPasswordModal() {
   if (!document.getElementById('password-modal')) {
     createPasswordModal();
@@ -259,7 +252,6 @@ function togglePasswordVisibility(inputId) {
   input.type = input.type === 'password' ? 'text' : 'password';
 }
 
-// Close modals when clicking outside
 window.onclick = function(event) {
   const deleteModal = document.getElementById('delete-modal');
   if (event.target === deleteModal) {
@@ -272,13 +264,10 @@ window.onclick = function(event) {
   }
 };
 
-// Initialize
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize edit buttons based on profile ownership
   const editButtons = document.getElementById('edit-buttons');
   const searchInput = document.getElementById('user-search-input');
 
-  // Add event listeners for account actions
   const changePassBtn = document.querySelector('.account-actions button:first-of-type');
   const deleteAccountBtn = document.querySelector('.account-actions button:last-of-type');
   
@@ -286,7 +275,6 @@ document.addEventListener('DOMContentLoaded', function() {
   if (deleteAccountBtn) deleteAccountBtn.onclick = showDeleteModal;
 });
 
-// Make functions available globally
 window.showDeleteModal = showDeleteModal;
 window.hideDeleteModal = hideDeleteModal;
 window.enableEditMode = enableEditMode;
