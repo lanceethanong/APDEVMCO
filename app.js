@@ -828,64 +828,262 @@ app.get('/api/reservations', async (req, res) => {
   }
 });
 
+// Fixed POST route for reservations (without sessions)
 app.post('/api/reservations', async (req, res) => {
-  const session = await mongoose.startSession();
-  
   try {
-    await session.withTransaction(async () => {
-      const { time_start, time_end, user, lab, date, anonymity, seats } = req.body;
-      
-      // Lookup user by username
-      const findUser = await users.findOne({ username: user });
-      if (!findUser) return res.status(404).json({ error: "User not found" });
+    const {
+      time_start,
+      time_end,
+      user: username,
+      lab: labNumber,
+      date,
+      anonymity,
+      seats
+    } = req.body;
 
-      // Lookup lab by numeric ID
-      const findLab = await lab.findOne({ number: lab });
-      if (!findLab) return res.status(404).json({ error: "Lab not found" });
-
-      // Create reservation
-      const reservation = new Reservation({
-        time_start,
-        time_end,
-        user: findUser._id,
-        lab: findLab._id,
-        date,
-        anonymity
+    // Input validation
+    if (!time_start || !time_end || !username || !labNumber || !date) {
+      return res.status(400).json({ 
+        error: "Missing required fields: time_start, time_end, user, lab, date" 
       });
-      
-      await reservation.save({ session });
-      
-      // Create seat assignments
-      if (seats && seats.length > 0) {
-        const seatDocs = seats.map(seat => ({
-          reservation: reservation._id,
-          row: seat.row,
-          column: seat.column
-        }));
-        
-        await SeatList.insertMany(seatDocs, { session });
-      }
-      
-      res.status(201).json(reservation);
+    }
+
+    if (!Array.isArray(seats) || seats.length === 0) {
+      return res.status(400).json({ 
+        error: "At least one seat must be selected" 
+      });
+    }
+
+    // Find user by username
+    const foundUser = await User.findOne({ username });
+    if (!foundUser) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Find lab by number
+    const foundLab = await Lab.findOne({ number: labNumber });
+    if (!foundLab) {
+      return res.status(404).json({ error: "Lab not found" });
+    }
+
+    // Parse and validate date
+    const reservationDate = new Date(date);
+    if (isNaN(reservationDate.getTime())) {
+      return res.status(400).json({ error: "Invalid date format" });
+    }
+
+    // Check for time conflicts in student reservations
+    const conflictingReservations = await Reservation.find({
+      lab: foundLab._id,
+      date: reservationDate,
+      $or: [
+        {
+          $and: [
+            { time_start: { $lt: time_end } },
+            { time_end: { $gt: time_start } }
+          ]
+        }
+      ]
     });
+
+    // Check for seat conflicts in student reservations
+    if (conflictingReservations.length > 0) {
+      const conflictingSeats = await SeatList.find({
+        reservation: { $in: conflictingReservations.map(r => r._id) }
+      });
+
+      const conflictingSeatPositions = conflictingSeats.map(seat => `${seat.row}-${seat.column}`);
+      const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`);
+      
+      const hasConflict = requestedSeatPositions.some(pos => conflictingSeatPositions.includes(pos));
+      
+      if (hasConflict) {
+        return res.status(409).json({ 
+          error: "One or more selected seats are already reserved for this time slot" 
+        });
+      }
+    }
+
+    // Check for technician reservation conflicts
+    const techConflictingReservations = await TechReservation.find({
+      lab: foundLab._id,
+      date: reservationDate,
+      $or: [
+        {
+          $and: [
+            { time_start: { $lt: time_end } },
+            { time_end: { $gt: time_start } }
+          ]
+        }
+      ]
+    });
+
+    if (techConflictingReservations.length > 0) {
+      const techConflictingSeats = await TechSeatList.find({
+        reservation: { $in: techConflictingReservations.map(r => r._id) }
+      });
+
+      const techConflictingSeatPositions = techConflictingSeats.map(seat => `${seat.row}-${seat.column}`);
+      const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`);
+      
+      const hasTechConflict = requestedSeatPositions.some(pos => techConflictingSeatPositions.includes(pos));
+      
+      if (hasTechConflict) {
+        return res.status(409).json({ 
+          error: "One or more selected seats are already reserved by technician for this time slot" 
+        });
+      }
+    }
+
+    // Create the reservation
+    const reservation = new Reservation({
+      time_start,
+      time_end,
+      user: foundUser._id,
+      lab: foundLab._id,
+      date: reservationDate,
+      anonymity: anonymity || false,
+      status: 'Scheduled'
+    });
+
+    await reservation.save();
+
+    // Create seat assignments
+    const seatDocs = seats.map(seat => ({
+      reservation: reservation._id,
+      row: parseInt(seat.row),
+      column: parseInt(seat.column)
+    }));
+
+    await SeatList.insertMany(seatDocs);
+
+    res.status(201).json({
+      success: true,
+      message: "Reservation created successfully",
+      reservationId: reservation._id,
+      reservation: {
+        _id: reservation._id,
+        time_start: reservation.time_start,
+        time_end: reservation.time_end,
+        date: reservation.date,
+        user: foundUser.username,
+        lab: `Lab ${foundLab.number} (${foundLab.class})`,
+        seats: seatDocs
+      }
+    });
+
   } catch (error) {
-    res.status(400).json({ error: error.message });
-  } finally {
-    await session.endSession();
+    console.error("Reservation Error:", error);
+    
+    // Handle specific MongoDB errors
+    if (error.code === 11000) {
+      return res.status(409).json({ 
+        error: "Duplicate reservation detected" 
+      });
+    }
+    
+    if (error.name === 'ValidationError') {
+      return res.status(400).json({ 
+        error: "Validation error: " + Object.values(error.errors).map(e => e.message).join(', ')
+      });
+    }
+    
+    res.status(500).json({ 
+      error: "Internal server error occurred while creating reservation" 
+    });
   }
 });
 
-app.get('/api/reservations/:id', async (req, res) => {
+// Additional helper route to check seat availability (without sessions)
+app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
   try {
-    const reservation = await Reservation.findById(req.params.id)
-      .populate('user', 'firstName lastName email')
-      .populate('lab', 'class number');
-    if (!reservation) {
-      return res.status(404).json({ error: 'Reservation not found' });
+    const { date, time_start, time_end } = req.query;
+    const { labNumber } = req.params;
+
+    if (!date || !time_start || !time_end) {
+      return res.status(400).json({ 
+        error: "Missing required query parameters: date, time_start, time_end" 
+      });
     }
-    res.json(reservation);
+
+    const lab = await Lab.findOne({ number: labNumber });
+    if (!lab) {
+      return res.status(404).json({ error: "Lab not found" });
+    }
+
+    const reservationDate = new Date(date);
+
+    // Get conflicting reservations
+    const [studentReservations, techReservations] = await Promise.all([
+      Reservation.find({
+        lab: lab._id,
+        date: reservationDate,
+        $or: [
+          {
+            $and: [
+              { time_start: { $lt: time_end } },
+              { time_end: { $gt: time_start } }
+            ]
+          }
+        ]
+      }),
+      TechReservation.find({
+        lab: lab._id,
+        date: reservationDate,
+        $or: [
+          {
+            $and: [
+              { time_start: { $lt: time_end } },
+              { time_end: { $gt: time_start } }
+            ]
+          }
+        ]
+      })
+    ]);
+
+    // Get occupied seats
+    const occupiedSeats = [];
+    
+    if (studentReservations.length > 0) {
+      const studentSeats = await SeatList.find({
+        reservation: { $in: studentReservations.map(r => r._id) }
+      });
+      occupiedSeats.push(...studentSeats.map(seat => ({ row: seat.row, column: seat.column })));
+    }
+    
+    if (techReservations.length > 0) {
+      const techSeats = await TechSeatList.find({
+        reservation: { $in: techReservations.map(r => r._id) }
+      });
+      occupiedSeats.push(...techSeats.map(seat => ({ row: seat.row, column: seat.column })));
+    }
+
+    // Generate all available seats (assuming 7 rows, 5 columns)
+    const totalSeats = [];
+    for (let row = 1; row <= 7; row++) {
+      for (let col = 1; col <= 5; col++) {
+        totalSeats.push({ row, column: col });
+      }
+    }
+
+    const availableSeats = totalSeats.filter(seat => 
+      !occupiedSeats.some(occupied => 
+        occupied.row === seat.row && occupied.column === seat.column
+      )
+    );
+
+    res.json({
+      success: true,
+      availableSeats,
+      occupiedSeats,
+      totalSeats: totalSeats.length,
+      availableCount: availableSeats.length,
+      occupiedCount: occupiedSeats.length
+    });
+
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Check availability error:", error);
+    res.status(500).json({ error: "Failed to check seat availability" });
   }
 });
 
