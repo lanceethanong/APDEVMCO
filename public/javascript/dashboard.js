@@ -18,6 +18,11 @@ function getURLParams() {
   };
 }
 
+function getEditParam(url) {
+  const urlObj = new URL(url, window.location.origin); // Ensures relative URL works
+  return urlObj.searchParams.get("edit");
+}
+
 // Search functionality
 async function searchUsers(query) {
   const resultsContainer = document.getElementById('search-results');
@@ -274,8 +279,7 @@ function renderSeats() {
           isPast = now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= min);
         }
 
-        //const unavailable = (listMatch != reservationList.length) && (slot >= timeToIndex(reservationList[listMatch].reservation.time_start) && slot < timeToIndex(reservationList[listMatch].reservation.time_end) && selectedLabNumber == reservationList[listMatch].reservation.lab.number) && selectedDate == new Date(reservationList[listMatch].reservation.date).toDateString();
-        const unavailable = (listMatch != reservationList.length) && (slot >= timeToIndex(reservationList[listMatch].reservation.time_start) && slot < timeToIndex(reservationList[listMatch].reservation.time_end) && selectedLabNumber == reservationList[listMatch].reservation.lab.number) && selectedDate == new Date("2025-07-14T00:00:00.000Z").toDateString(); // disable date checks for now
+        const unavailable = (listMatch != reservationList.length) && (slot >= timeToIndex(reservationList[listMatch].reservation.time_start) && slot < timeToIndex(reservationList[listMatch].reservation.time_end) && selectedLabNumber == reservationList[listMatch].reservation.lab.number) && selectedDate == new Date(reservationList[listMatch].reservation.date).toDateString();
         const disabled = !selectedRoom || !selectedDate || isPast;
 
         td.className = unavailable
