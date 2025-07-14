@@ -380,11 +380,11 @@ document.getElementById("reserveBtn").onclick = () => {
     const request = {
       time_start: slotToTime(start_slot),
       time_end: slotToTime(end_slot),
-      user: getURLParams().username,
-      lab: getURLParams().labNumber,
-      date: new Date(selectedDate).toISOString(),
+      user: getURLParams().username, // ObjectId to be determined server-side
+      lab: getURLParams().labNumber, // ObjectId to be determined server-side
+      date: new Date(selectedDate),
       anonymity: false,
-      seats: {row: r, column: c},
+      seats: {row: parseInt(r), column: parseInt(c)},
     };
     console.log(request);
 
@@ -396,9 +396,8 @@ document.getElementById("reserveBtn").onclick = () => {
       body: JSON.stringify(request)
     })
     .then(response => {
-      alert("Slots reserved successfully!");
       if (!response.ok) throw new Error("Request failed");
-      return response.json();
+      console.log(response.json());
     })
     .then(data => {
       console.log("Server response:", data);
