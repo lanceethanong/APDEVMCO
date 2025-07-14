@@ -201,6 +201,20 @@ app.get('/dashboard/technician', (req, res) => {
   });
 });
 
+// Route for reservation editing
+app.get('/dashboard/technician/edit/:id', (req, res) => {
+  const id = req.query.id;
+
+  res.render('handlebars/dashboard', {
+    title: 'Edit Reservation',
+    layout: 'dashboard-Layout',
+    id,
+    username: "Lab Technician",
+    role: "Lab Technician",
+    rooms: [],
+  });
+});
+
 app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
   const { role, labNumber } = req.params;
   const username = req.query.username || 'Guest';
