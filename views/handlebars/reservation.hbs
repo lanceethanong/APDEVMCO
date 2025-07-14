@@ -15,11 +15,11 @@
 
       {{#unless isPast}}
         <div class="actions">
-          <button class="edit-btn">Edit</button>
+          <button class="edit-btn" onclick="edit('{{_id}}')" type="button">Edit</button>
           {{#if showDelete}}
-            <button class="delete-btn">Delete</button>
+            <button class="delete-btn" onclick="del('{{_id}}')" type="button">Delete</button>
           {{else}}
-            <button class="delete-btn disabled" disabled>Delete</button>
+            <button class="delete-btn disabled" type="button" disabled>Delete</button>
           {{/if}}
         </div>
       {{/unless}}
@@ -27,3 +27,4 @@
     </div>
   {{/each}}
 </div>
+<script src="/javascript/reservation.js"></script>

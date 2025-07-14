@@ -426,7 +426,8 @@ app.get('/dashboard/technician/reservation-list', async (req, res) => {
         path: 'reservation',
         populate: [
           { path: 'student', select: 'username' },
-          { path: 'lab', select: 'class number' }
+          { path: 'lab', select: 'class number' },
+
         ]
       }).lean()
     ]);
@@ -676,6 +677,40 @@ app.delete('/api/users/:username', async (req, res) => {
   } catch (error) {
     console.error('Delete account error:', error);
     res.status(500).json({ error: 'Failed to delete account' });
+  }
+});
+
+app.delete('/api/reservation/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    let tech = false;
+    let user = await Reservation.findOne({ _id: id });
+    let seat = await SeatList.findOne({ reservation: id });
+
+    if (!user || seat) {
+      user = await TechReservation.findOne({ _id: id });
+      seat = await TechSeatList.findOne({ reservation: id });
+      tech = true;
+    }
+
+    if (!user || seat) {
+      return res.status(404).json({ error: 'Reservation not found' });
+    }
+
+    if (tech) {
+      await Reservation.deleteOne({ username: decodedUsername });
+      await SeatList.deleteOne({ username: decodedUsername });
+      res.json({ success: true, message: 'Reservation deleted successfully' });
+    }
+    else {
+      await TechReservation.deleteOne({ username: decodedUsername });
+      await TechSeatListSeatList.deleteOne({ username: decodedUsername });
+      res.json({ success: true, message: 'Reservation deleted successfully' });
+    }
+  } catch (error) {
+    console.error('Delete reservation error:', error);
+    res.status(500).json({ error: 'Failed to delete reservation' });
   }
 });
 
