@@ -1,0 +1,124 @@
+[
+    {
+        "_id": {
+            "$oid": "6860a12de85f16a79168b642"
+        },
+        "email": "nightshow@dlsu.edu.ph",
+        "description": "ID124",
+        "remember": false,
+        "password": "Hallelujah",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "__v": 0,
+        "username": "Travis"
+    },
+    {
+        "_id": {
+            "$oid": "6860a2bb1d876edbb63e81f8"
+        },
+        "email": "blinker@dlsu.edu.ph",
+        "description": "ID124",
+        "remember": false,
+        "password": "LOTV1234",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "__v": 0,
+        "username": "Ellen Ophelia"
+    },
+    {
+        "_id": {
+            "$oid": "6860a2bb1d876edbb63e81f9"
+        },
+        "email": "randy@dlsu.edu.ph",
+        "description": "ID122",
+        "remember": false,
+        "password": "7/11",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "__v": 0,
+        "username": "RandyV"
+    },
+    {
+        "_id": {
+            "$oid": "6860a2bb1d876edbb63e81fa"
+        },
+        "email": "ramona@dlsu.edu.ph",
+        "description": "ID123",
+        "remember": false,
+        "password": "guerrero",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "__v": 0,
+        "username": "RamonaTas"
+    },
+    {
+        "_id": {
+            "$oid": "6860a2bb1d876edbb63e81fb"
+        },
+        "email": "technpc1@dlsu.edu.ph",
+        "description": "I am the head lab technician at DLSU Manila",
+        "remember": false,
+        "password": "bnwdadbbwaidaw",
+        "picture": "picture.jpg",
+        "role": "Lab Technician",
+        "__v": 0,
+        "username": "GeorgeB",
+        "updatedAt": {
+            "$date": "2025-07-09T08:28:12.694Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "686ca1853738dc8aea3ed9db"
+        },
+        "email": "hello123@dlsu.edu.ph",
+        "description": "Lab Technician of DLSU-Laguna",
+        "remember": true,
+        "password": "123456ch",
+        "picture": "picture.jpg",
+        "role": "Lab Technician",
+        "__v": 0,
+        "username": "Hello",
+        "updatedAt": {
+            "$date": "2025-07-10T14:00:24.043Z"
+        }
+    },
+    {
+        "_id": {
+            "$oid": "687221e3a696175bce9161ff"
+        },
+        "email": "aiwajdwa@dlsu.edu.ph",
+        "username": "jenson",
+        "description": "",
+        "remember": false,
+        "password": "Hello!234",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "createdAt": {
+            "$date": "2025-07-12T08:50:43.031Z"
+        },
+        "updatedAt": {
+            "$date": "2025-07-12T08:50:43.031Z"
+        },
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "6872220aa696175bce916205"
+        },
+        "email": "lancewda@dlsu.edu.ph",
+        "username": "lance",
+        "description": "Hello",
+        "remember": false,
+        "password": "Hello!234",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "createdAt": {
+            "$date": "2025-07-12T08:51:22.63Z"
+        },
+        "updatedAt": {
+            "$date": "2025-07-12T12:57:49.424Z"
+        },
+        "__v": 0
+    }
+]

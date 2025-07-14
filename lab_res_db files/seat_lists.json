@@ -1,0 +1,57 @@
+[
+    {
+        "_id": {
+            "$oid": "6860209edd4aa5e9ece90b01"
+        },
+        "reservation": {
+            "$oid": "6860a43dbb224dc67b134227"
+        },
+        "row": 3,
+        "column": 2,
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "686020fcd3cb1df588e5bacc"
+        },
+        "reservation": {
+            "$oid": "6860a43dbb224dc67b134227"
+        },
+        "row": 3,
+        "column": 1,
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "686020fcd3cb1df588e5bacf"
+        },
+        "reservation": {
+            "$oid": "6860a6ebcd9bde78e6953971"
+        },
+        "row": 1,
+        "column": 2,
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "686020fcd3cb1df588e5bacd"
+        },
+        "reservation": {
+            "$oid": "6860a6ebcd9bde78e6953970"
+        },
+        "row": 3,
+        "column": 3,
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "686020fcd3cb1df588e5bace"
+        },
+        "reservation": {
+            "$oid": "6860a6ebcd9bde78e6953971"
+        },
+        "row": 1,
+        "column": 1,
+        "__v": 0
+    }
+]
