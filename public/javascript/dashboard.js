@@ -1,13 +1,11 @@
-// Dashboard logic (calendar + seat booking)
 let selectedRoom = null;
 let selectedLabNumber = null;
 let selectedDate = null;
 let seatSelections = {};
 let currentMonth = new Date();
 let rooms = [];
-let searchTimeout; // Added for search functionality
+let searchTimeout; 
 
-// Parse URL info like /dashboard/student/lab/1?username=George
 function getURLParams() {
   const pathMatch = window.location.pathname.match(/\/dashboard\/(student|technician)(?:\/lab\/(\d+))?/);
   const usernameParam = new URLSearchParams(window.location.search).get('username');
@@ -19,11 +17,10 @@ function getURLParams() {
 }
 
 function getEditParam(url) {
-  const urlObj = new URL(url, window.location.origin); // Ensures relative URL works
+  const urlObj = new URL(url, window.location.origin);
   return urlObj.searchParams.get("edit");
 }
 
-// Search functionality
 async function searchUsers(query) {
   const resultsContainer = document.getElementById('search-results');
   
@@ -71,11 +68,9 @@ function viewUserProfile(username) {
   const currentRole = document.body.dataset.role.includes('Technician') ? 'technician' : 'student';
   const currentUsername = document.body.dataset.username;
   
-  // Navigate to the selected user's profile with current user as viewer
   window.location.href = `/dashboard/view-profile/${encodeURIComponent(username)}?username=${encodeURIComponent(currentUsername)}`;
 }
 
-// Rest of the existing dashboard functions...
 async function fetchRoomsAndSelect() {
   try {
     const res = await fetch('/api/labs');
@@ -196,7 +191,7 @@ function getKey() {
   return `${new Date(selectedDate).toISOString().split("T")[0]}_${selectedRoom}`;
 }
 
-function timeToIndex(apiTime) { // converts a time string from the API (e.g "8 AM") into a slot index for rendering purposes
+function timeToIndex(apiTime) {
   const time = apiTime.split(" ")[0].split(":");
   let index = (apiTime == "7 PM") ? 24 : (time[0] < 7) ? (parseInt(time[0]) - 1) * 2 + 12 : (parseInt(time[0]) - 7) * 2;
 
@@ -207,7 +202,7 @@ function timeToIndex(apiTime) { // converts a time string from the API (e.g "8 A
 }
 
 function slotToTime(slot) {
-  const baseHour = 7; // 7 AM is slot 0
+  const baseHour = 7;
   const totalMinutes = baseHour * 60 + slot * 30;
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
@@ -373,7 +368,6 @@ document.getElementById("reserveBtn").onclick = async () => {
 
     console.log("Parsed slot data:", slotData);
 
-    // Group by seat
     const seatGroups = {};
     for (const s of slotData) {
       const seatKey = `${s.row}_${s.column}`;
@@ -383,7 +377,6 @@ document.getElementById("reserveBtn").onclick = async () => {
 
     console.log("Seat groups:", seatGroups);
 
-    // Validate each seat has consecutive slots
     for (const [seatKey, slots] of Object.entries(seatGroups)) {
       const sorted = slots.sort((a, b) => a - b);
       const isConsecutive = sorted.every((s, i, arr) => i === 0 || s === arr[i - 1] + 1);
@@ -395,7 +388,6 @@ document.getElementById("reserveBtn").onclick = async () => {
       }
     }
 
-    // Determine global start and end slot
     const allSlots = slotData.map(s => s.slot);
     const globalStartSlot = Math.min(...allSlots);
     const globalEndSlot = Math.max(...allSlots) + 1;
@@ -411,7 +403,6 @@ document.getElementById("reserveBtn").onclick = async () => {
 
     const { username, labNumber } = getURLParams();
     
-    // Validate required parameters
     if (!username) {
       alert("Username is required");
       return;
@@ -422,7 +413,6 @@ document.getElementById("reserveBtn").onclick = async () => {
       return;
     }
 
-    // Check if selectedDate is defined
     if (typeof selectedDate === 'undefined') {
       alert("Please select a date");
       return;
@@ -430,7 +420,6 @@ document.getElementById("reserveBtn").onclick = async () => {
 
     const anonymity = document.getElementById('anonymityToggle')?.checked || false;
 
-    // Validate slotToTime function exists
     if (typeof slotToTime !== 'function') {
       alert("Time conversion function not available");
       return;
@@ -448,7 +437,6 @@ document.getElementById("reserveBtn").onclick = async () => {
 
     console.log("Request payload:", JSON.stringify(request, null, 2));
 
-    // Disable button to prevent double-clicking
     const reserveBtn = document.getElementById("reserveBtn");
     const originalText = reserveBtn.textContent;
     reserveBtn.disabled = true;
@@ -489,18 +477,14 @@ document.getElementById("reserveBtn").onclick = async () => {
     
     alert("Reservation successful!");
     
-    // Clear selections
     seatSelections[key] = new Set();
     
-    // Re-render seats if function exists
     if (typeof renderSeats === 'function') {
       renderSeats();
     }
 
-    // Get role for redirect
     const { role } = getURLParams();
     
-    // Redirect based on role
     if (role === 'student') {
       window.location.href = `/dashboard/student/profile?username=${encodeURIComponent(username)}`;
     } else {
@@ -513,17 +497,14 @@ document.getElementById("reserveBtn").onclick = async () => {
     console.error("Error stack:", error.stack);
     alert(`Failed to reserve slots: ${error.message}`);
   } finally {
-    // Re-enable button
     const reserveBtn = document.getElementById("reserveBtn");
     if (reserveBtn) {
       reserveBtn.disabled = false;
-      reserveBtn.textContent = "Reserve"; // or whatever the original text was
+      reserveBtn.textContent = "Reserve"; 
     }
   }
 };
-// Initialize everything
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize search input
   const searchInput = document.getElementById('user-search-input');
   if (searchInput) {
     searchInput.addEventListener('input', function(e) {
@@ -531,7 +512,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Close search results when clicking outside
   document.addEventListener('click', function(event) {
     if (!event.target.closest('.search-wrapper') && !event.target.closest('#search-results')) {
       const resultsContainer = document.getElementById('search-results');
@@ -542,13 +522,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   });
 
-  // Initialize dashboard components
   fetchRoomsAndSelect();
   renderMonth();
   renderCalendar();
   updateClock();
 });
 
-// Make search functions available globally
 window.searchUsers = searchUsers;
 window.viewUserProfile = viewUserProfile;
