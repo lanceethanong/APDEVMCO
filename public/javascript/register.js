@@ -14,13 +14,11 @@ document.addEventListener('DOMContentLoaded', () => {
     email_error.innerHTML = "";
     password_error.innerHTML = "";
 
-    // Validate email
     if (!/@dlsu.edu.ph\s*$/.test(email_input.value)) {
       email_error.innerHTML = "Please enter a DLSU email address";
       isValid = false;
     }
 
-    // Validate password match
     if (password.value !== confirm.value) {
       password_error.innerHTML = "Passwords do not match.";
       isValid = false;
@@ -37,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     if (!isValid) {
-      event.preventDefault(); // Only stop submission if invalid
+      event.preventDefault();
     }
   });
 });
