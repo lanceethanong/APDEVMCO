@@ -1,4 +1,3 @@
-/* Reset */
 body, html {
   margin: 0;
   padding: 0;
@@ -7,7 +6,6 @@ body, html {
   height: 100%;
 }
 
-/* Layout */
 .dashboard-layout {
   display: flex;
   flex-direction: column;
@@ -21,6 +19,11 @@ body, html {
   display: flex;
   align-items: center;
   justify-content: space-between;
+}
+.dashboard-main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
 }
 
 .menu-toggle {
@@ -54,12 +57,6 @@ body, html {
   height: 100%;
   object-fit: cover;
   cursor: pointer;
-}
-
-.dashboard-main {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
 }
 
 .sidebar {
@@ -326,7 +323,6 @@ body, html {
   cursor: not-allowed;
 }
 
-
 .search-wrapper {
   position: relative;
   display: flex;
@@ -335,7 +331,6 @@ body, html {
   flex-grow: 1;
   max-width: 400px;
 }
-
 .search-container {
   display: flex;
   align-items: center;
