@@ -1,4 +1,3 @@
-/* Profile-specific styles */
 .profile-section {
   max-width: 1100px;
   margin: auto;
@@ -208,7 +207,6 @@
   background-color: #b91c1c;
 }
 
-/* Modal styles */
 .modal {
   display: none;
   position: fixed;
@@ -426,16 +424,15 @@
   color: black;
 }
 
-/*password modals*/
 #password-modal .modal-content {
   background-color: #ffffff;
   margin: 10% auto;
   padding: 2rem;
   border-radius: 0.5rem;
   width: 90%;
-  max-width: 400px; /* Slightly narrower for better focus */
+  max-width: 400px; 
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  text-align: center; /* Center all text content */
+  text-align: center;
 }
 
 #password-modal .close {
@@ -516,7 +513,6 @@
   background-color: #047857;
 }
 
-/* Password toggle visibility feature */
 .password-input {
   position: relative;
 }
@@ -539,7 +535,6 @@
   color: #374151;
 }
 
-/* Responsive adjustments */
 @media (max-width: 480px) {
   #password-modal .modal-content {
     padding: 1.5rem;
