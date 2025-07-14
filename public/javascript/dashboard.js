@@ -201,6 +201,18 @@ function timeToIndex(apiTime) { // converts a time string from the API (e.g "8 A
   return index;
 }
 
+function slotToTime(slot) {
+  const baseHour = 7; // 7 AM is slot 0
+  const totalMinutes = baseHour * 60 + slot * 30;
+  const hours = Math.floor(totalMinutes / 60);
+  const minutes = totalMinutes % 60;
+
+  const period = hours >= 12 ? "PM" : "AM";
+  const displayHour = hours % 12 === 0 ? 12 : hours % 12;
+  const timeStr = `${String(displayHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
+  return timeStr;
+}
+
 function renderSeatInfo() {
   document.getElementById("selectedInfo").textContent = `Seat availability at Lab Room: ${selectedRoom || "(not selected)"}`;
 }
@@ -299,29 +311,107 @@ function updateReserveButton() {
   document.getElementById("reserveBtn").disabled = !(selectedRoom && selectedDate);
 }
 
-document.getElementById("reserveBtn").onclick = () => {
-  // Convert the set to an array
-  const slotArray = Array.from(seatSelections);
+function validateSlotSet(slotSet) {
+  const slots = Array.from(slotSet).sort();
+  console.log(slotSet);
+  console.log(slots);
+  const r = slots[0].charAt(1);
+  const c = slots[0].charAt(4);
 
-  // Send POST request to the server
-  fetch("/api/reservations", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(slotArray)
-  })
-  .then(response => {
-    if (!response.ok) throw new Error("Request failed");
-    return response.json();
-  })
-  .then(data => {
-    console.log("Server response:", data);
-  })
-  .catch(error => {
-    console.error("Error sending slots:", error);
-  });
-};
+  let result = true;
+
+  if (slots.length > 1) {
+    let i = 0;
+    
+    while (i < slots.length && result) {
+      result = (slots[i].charAt(1) == r);
+      i++;
+    }
+
+    i = 0;
+    while (i < slots.length && result) {
+      result = (slots[i].charAt(4) == c);
+      i++;
+    }
+
+    i = 1;
+    while (i < slots.length && result) {
+      result = ((parseInt(slots[i].charAt(7)) - 1) == parseInt(slots[i - 1].charAt(7)));
+      i++;
+    }
+  }
+  return result;
+}
+
+document.getElementById("reserveBtn").onclick = () => {
+  const slots = Array.from(seatSelections[getKey()]).sort();
+  const r = slots[0].charAt(1);
+  const c = slots[0].charAt(4);
+  
+  const start_slot = slots[0].charAt(7);
+  let end_slot = start_slot;
+
+  let result = true;
+
+  if (slots.length > 1) {
+    let i = 0;
+    
+    while (i < slots.length && result) {
+      result = (slots[i].charAt(1) == r);
+      i++;
+    }
+
+    i = 0;
+    while (i < slots.length && result) {
+      result = (slots[i].charAt(4) == c);
+      i++;
+    }
+
+    i = 1;
+    while (i < slots.length && result) {
+      result = ((parseInt(slots[i].charAt(7)) - 1) == parseInt(slots[i - 1].charAt(7)));
+      if (result)
+        end_slot++;
+      i++;
+    }
+  }
+
+  if (result) {
+    const request = {
+      time_start: slotToTime(start_slot),
+      time_end: slotToTime(end_slot),
+      user: getURLParams().username,
+      lab: getURLParams().labNumber,
+      date: new Date(selectedDate).toISOString(),
+      anonymity: false,
+      seats: {row: r, column: c},
+    };
+    console.log(request);
+
+    fetch("/api/reservations", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(request)
+    })
+    .then(response => {
+      alert("Slots reserved successfully!");
+      if (!response.ok) throw new Error("Request failed");
+      return response.json();
+    })
+    .then(data => {
+      console.log("Server response:", data);
+    })
+    .catch(error => {
+      alert("Failed to reserve slots. Please try again.");
+      console.error("Error sending slots:", error);
+    });
+  }
+
+  else
+    alert("Only one reservation can be made at a time. Please make sure your selected slots are consecutive and belong to the same seat.");
+}
 
 // Initialize everything
 document.addEventListener('DOMContentLoaded', function() {

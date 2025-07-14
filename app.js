@@ -835,12 +835,20 @@ app.post('/api/reservations', async (req, res) => {
     await session.withTransaction(async () => {
       const { time_start, time_end, user, lab, date, anonymity, seats } = req.body;
       
+      // Lookup user by username
+      const findUser = await users.findOne({ username: user });
+      if (!findUser) return res.status(404).json({ error: "User not found" });
+
+      // Lookup lab by numeric ID
+      const findLab = await lab.findOne({ number: lab });
+      if (!findLab) return res.status(404).json({ error: "Lab not found" });
+
       // Create reservation
       const reservation = new Reservation({
         time_start,
         time_end,
-        user,
-        lab,
+        user: findUser._id,
+        lab: findLab._id,
         date,
         anonymity
       });
