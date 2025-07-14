@@ -96,7 +96,6 @@
   </div>
 {{/if}}
 
-<!-- Account actions should be outside the Student-only block -->
 <div class="account-actions">
   <h3>Account Actions</h3>
   <button onclick="openPasswordModal()">Change Password</button>
@@ -108,7 +107,6 @@
     {{> footer}}
   </div>
 
-  <!-- Delete modal -->
   <div id="delete-modal" class="delete-modal">
     <div class="delete-modal-content">
       <h2>Confirm Account Deletion</h2>
@@ -155,7 +153,6 @@
 <script src="/javascript/profile.js"></script>
   <script src="/javascript/dashboard.js"></script>
   <script>
-    // Make sure these functions are globally available
     window.showDeleteModal = showDeleteModal;
     window.hideDeleteModal = hideDeleteModal;
     window.confirmDeleteAccount = confirmDeleteAccount;
