@@ -162,8 +162,8 @@ app.post('/register', async (req, res) => {
 
     // Redirect based on role
     const redirectURL = normalizedRole === 'Lab Technician'
-      ? `/dashboard/technician?username=${encodeURIComponent(username)}}`
-      : `/dashboard/student?username=${encodeURIComponent(username)}}`;
+      ? `/dashboard/technician?username=${encodeURIComponent(username)}`
+      : `/dashboard/student?username=${encodeURIComponent(username)}`;
 
     res.redirect(redirectURL);
 
