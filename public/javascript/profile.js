@@ -1,4 +1,6 @@
 function getUsername() {
+
+  //Gets the user to be displayed
   const usernameElement = document.querySelector('.profile-info h2');
   if (usernameElement) {
     return usernameElement.textContent.trim();
@@ -14,10 +16,11 @@ function getUsername() {
   return null;
 }
 
+// Search option to find users
 async function searchUsers(query) {
   const resultsContainer = document.getElementById('search-results');
   
-  if (!query || query.length < 2) {
+  if (!query || query.length < 2) { // If the query is either blank or has only 1 character show nothing
     resultsContainer.innerHTML = '';
     resultsContainer.classList.remove('show');
     return;
@@ -25,19 +28,20 @@ async function searchUsers(query) {
 
   clearTimeout(searchTimeout);
   
-  searchTimeout = setTimeout(async () => {
+  searchTimeout = setTimeout(async () => {  // If no user is found
     try {
-      const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`);
-      const users = await response.json();
+      const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`); //finds users 
+      const users = await response.json(); //checks mongodb
       
-      if (users.length === 0) {
+      if (users.length === 0) { //If no users match 
         resultsContainer.innerHTML = '<div class="search-result-item">No users found</div>';
         resultsContainer.classList.add('show');
         return;
       }
-      
+
+      // If user/users are found displays a preview that contains user name picture and email along with their role 
       resultsContainer.innerHTML = users.map(user => `
-        <div class="search-result-item" data-username="${user.username}">
+        <div class="search-result-item" data-username="${user.username}"> 
           <img src="/assets/profile.png" alt="${user.username}" class="search-result-pic">
           <div class="search-result-info">
             <strong>${user.username}</strong>
@@ -47,9 +51,9 @@ async function searchUsers(query) {
         </div>
       `).join('');
       
-      resultsContainer.classList.add('show');
+      resultsContainer.classList.add('show'); //shows all 
       
-    } catch (error) {
+    } catch (error) { //if the search query fails
       console.error('Search failed:', error);
       resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
       resultsContainer.classList.add('show');
@@ -65,55 +69,59 @@ function hideDeleteModal() {
   document.getElementById('delete-modal').style.display = 'none';
 }
 
+// If a user wants to delete their account
 async function confirmDeleteAccount() {
-  const username = getUsername();
+  const username = getUsername(); //gets the users username
   if (!username) {
     alert('Could not determine your username');
     return;
   }
 
+  // gets the users data
   try {
-    const response = await fetch(`/api/users/${encodeURIComponent(username)}`, {
-      method: 'DELETE',
+    const response = await fetch(`/api/users/${encodeURIComponent(username)}`, { //fetches user data
+      method: 'DELETE', //deletes user data 
       headers: {
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json', //storedi n json
       }
     });
 
-    if (response.ok) {
-      window.location.href = '/login?accountDeleted=true';
+    if (response.ok) { //If the user has successfully been deleted from the database
+      window.location.href = '/login?accountDeleted=true'; //redirects them back to the login screen
     } else {
       const errorData = await response.json();
       alert(`Failed to delete account: ${errorData.error || 'Unknown error'}`);
     }
-  } catch (error) {
+  } catch (error) { //Catches any errors 
     console.error('Error deleting account:', error);
     alert('An error occurred while trying to delete your account. Please try again.');
   } finally {
-    hideDeleteModal();
+    hideDeleteModal(); //removes the delete modal
   }
 }
-
-function enableEditMode() {
+//function that enables users to edit their profile
+function enableEditMode() { 
   const aboutText = document.getElementById('about-text');
-  aboutText.readOnly = false;
+  aboutText.readOnly = false; // So that the fields can be edited
   aboutText.focus();
   
-  const editButtons = document.getElementById('edit-buttons');
+  const editButtons = document.getElementById('edit-buttons'); // Shows the edit buttons
   editButtons.innerHTML = `
     <button onclick="saveProfileChanges()" class="save-btn">Save Changes</button>
     <button onclick="cancelEditMode()" class="cancel-btn">Cancel</button>
   `;
 }
-
+//Cancels edit mode
 function cancelEditMode() {
   const aboutText = document.getElementById('about-text');
   aboutText.readOnly = true;
   
   const editButtons = document.getElementById('edit-buttons');
-  editButtons.innerHTML = `<button onclick="enableEditMode()" class="edit-btn">Edit Profile</button>`;
+  editButtons.innerHTML = `<button onclick="enableEditMode()" class="edit-btn">Edit Profile</button>`; // used to renable edit mode
 }
 
+
+//Saves changes to a user profile
 async function saveProfileChanges() {
   const username = getUsername();
   if (!username) {
@@ -122,7 +130,8 @@ async function saveProfileChanges() {
   }
 
   const description = document.getElementById('about-text').value;
-  
+
+  //Saves changes to database(put is used to assign values to certain fields)
   try {
     const response = await fetch(`/api/users/${encodeURIComponent(username)}`, {
       method: 'PUT',
@@ -132,10 +141,13 @@ async function saveProfileChanges() {
       body: JSON.stringify({ description })
     });
 
+    //If changes are successful,
     if (response.ok) {
       cancelEditMode();
       alert('Profile updated successfully!');
-    } else {
+    } 
+    //unsuccessful changes
+    else {
       const errorData = await response.json();
       alert(`Failed to update profile: ${errorData.error || 'Unknown error'}`);
     }
@@ -145,6 +157,7 @@ async function saveProfileChanges() {
   }
 }
 
+//Opens the change password block
 function openPasswordModal() {
   if (!document.getElementById('password-modal')) {
     createPasswordModal();
@@ -156,6 +169,7 @@ function closePasswordModal() {
   document.getElementById('password-modal').style.display = 'none';
 }
 
+//Password change box
 function createPasswordModal() {
   const modal = document.createElement('div');
   modal.id = 'password-modal';
@@ -197,47 +211,51 @@ function createPasswordModal() {
   `;
   
   document.body.appendChild(modal);
-  
+  // Gets the input
   document.getElementById('password-form').addEventListener('submit', async function(e) {
     e.preventDefault();
-    await changePassword();
+    await changePassword(); //waits for what the user inputs
   });
 }
 
+//modal to change theri password
 async function changePassword() {
   const username = getUsername();
   if (!username) {
     alert('Could not determine your username');
     return;
   }
-
-  const currentPassword = document.getElementById('current-password').value;
+  //checks password fields
+  const currentPassword = document.getElementById('current-password').value; 
   const newPassword = document.getElementById('new-password').value;
   const confirmPassword = document.getElementById('confirm-password').value;
-  
+
+  //If not same passwords
   if (newPassword !== confirmPassword) {
     alert('New passwords do not match!');
     return;
   }
-  
+  // at least 8 characters
   if (newPassword.length < 8) {
     alert('Password must be at least 8 characters long');
     return;
   }
-  
+  //Fills in the request to change password
   try {
     const response = await fetch(`/api/users/${encodeURIComponent(username)}/change-password`, {
-      method: 'POST',
+      method: 'POST',// posts because it would submit the changes 
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ currentPassword, newPassword })
+      body: JSON.stringify({ currentPassword, newPassword }) //changes the currentpassword to the new password
     });
-
+    //successful
     if (response.ok) {
       alert('Password changed successfully!');
       closePasswordModal();
-    } else {
+    } 
+    //unsuccessful
+    else {
       const errorData = await response.json();
       alert(`Failed to change password: ${errorData.error || 'Unknown error'}`);
     }
@@ -246,7 +264,7 @@ async function changePassword() {
     alert('An error occurred while changing your password. Please try again.');
   }
 }
-
+// toggles the password inputted
 function togglePasswordVisibility(inputId) {
   const input = document.getElementById(inputId);
   input.type = input.type === 'password' ? 'text' : 'password';
@@ -263,7 +281,7 @@ window.onclick = function(event) {
     closePasswordModal();
   }
 };
-
+//event listeners
 document.addEventListener('DOMContentLoaded', function() {
   const editButtons = document.getElementById('edit-buttons');
   const searchInput = document.getElementById('user-search-input');
@@ -274,7 +292,7 @@ document.addEventListener('DOMContentLoaded', function() {
   if (changePassBtn) changePassBtn.onclick = openPasswordModal;
   if (deleteAccountBtn) deleteAccountBtn.onclick = showDeleteModal;
 });
-
+//enables global modals
 window.showDeleteModal = showDeleteModal;
 window.hideDeleteModal = hideDeleteModal;
 window.enableEditMode = enableEditMode;
