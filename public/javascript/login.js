@@ -8,9 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const email = emailInput.value.trim();
 
-    // Check if email is a valid DLSU address
     if (!/@dlsu\.edu\.ph\s*$/.test(email)) {
-      event.preventDefault(); // Stop form from submitting
+      event.preventDefault();
       emailError.textContent = 'Please use your DLSU email address.';
     }
   });
