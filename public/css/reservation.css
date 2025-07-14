@@ -6,7 +6,7 @@
 
 .reservation-box {
   background-color: #f9f9f9;
-  border-left: 6px solid #ccc; /* Default border */
+  border-left: 6px solid #ccc;
   padding: 16px;
   width: 100%;
   border-radius: 6px;
@@ -28,7 +28,6 @@
 .status.blue { color: blue; }
 .status.yellow { color: orange; }
 
-/* Add left border colors based on status */
 .reservation-box.green { border-left-color: green; }
 .reservation-box.red { border-left-color: red; }
 .reservation-box.blue { border-left-color: blue; }
@@ -52,7 +51,7 @@
 }
 
 .delete-btn {
-  background-color: #dc3545; /* red */
+  background-color: #dc3545; 
   color: white;
   border: none;
   padding: 6px 12px;
@@ -62,8 +61,8 @@
 }
 
 .delete-btn.disabled {
-  background-color: #6c757d; /* gray */
-  opacity: 1;                /* override any fading */
+  background-color: #6c757d; 
+  opacity: 1;                
   cursor: not-allowed;
   pointer-events: none;
 }
