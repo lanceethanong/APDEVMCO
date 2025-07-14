@@ -1,15 +1,5 @@
 const mongoose = require('mongoose');
 
-const uri = 'mongodb+srv://admin:mc0-admin@cluster0.ndwtzr5.mongodb.net/lab_res_db?retryWrites=true&w=majority&appName=Cluster0';
+const uri = 'mongodb://localhost:27017/lab_res_db';
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect(uri);
-    console.log('Connected to MongoDB!');
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  }
-};
-
-module.exports = connectDB;
+module.exports = () => mongoose.connect(uri);
