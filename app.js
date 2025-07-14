@@ -1102,8 +1102,6 @@ app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
   }
 });
 
-
-
 app.put('/api/reservations/:id', async (req, res) => {
   try {
     const reservation = await Reservation.findByIdAndUpdate(

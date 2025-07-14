@@ -23,6 +23,12 @@ function getURLParams() {
   };
 }
 
+// Technician: Get reservation ID from URL to edit
+function getReservationID() {
+  const match = window.location.pathname.match(/\/edit\/([^\/?#]+)/);
+  return match ? match[1] : null;
+}
+
 // Technician: Search and select a student to reserve for
 async function technicianStudentSearch(query) {
   const resultsContainer = document.getElementById('technician-search-results');
@@ -586,11 +592,21 @@ document.getElementById("reserveBtn").onclick = async () => {
     const originalText = reserveBtn.textContent;
     reserveBtn.disabled = true;
     reserveBtn.textContent = "Processing...";
-    const response = await fetch("/api/reservations", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(request)
-    });
+    let response = null;
+    if (getReservationID()) {
+      response = await fetch("/api/reservations/" + getReservationID(), {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request)
+      });
+    }
+    else {
+      response = await fetch("/api/reservations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(request)
+      });
+    }
     if (!response.ok) {
       let errorMessage = `HTTP ${response.status}`;
       try {
