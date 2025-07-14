@@ -641,7 +641,7 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
 });
 
 
-// Add this to your API routes in app.js
+// Delete users
 app.delete('/api/users/:username', async (req, res) => {
   try {
     const { username } = req.params;
@@ -660,6 +660,7 @@ app.delete('/api/users/:username', async (req, res) => {
   }
 });
 
+// Delete reservations
 app.delete('/api/reservation/:id', async (req, res) => {
   try {
     const { id } = req.params;
@@ -694,7 +695,7 @@ app.delete('/api/reservation/:id', async (req, res) => {
   }
 });
 
-// Update the password change endpoint
+// Change password
 app.post('/api/users/:username/change-password', async (req, res) => {
   try {
     const { username } = req.params;
