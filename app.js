@@ -1,14 +1,28 @@
+if(process.env.NODE_ENV !== 'production'){
+  require('dotenv').config();
+}
 const express = require('express'); 
+const session = require('express-session');
 const exphbs = require('express-handlebars'); 
 const path = require('path'); 
 const mongoose = require('mongoose');
 const app = express(); 
 const port = 3000; 
 const connectDB = require('./model/db');
-
+const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech } = require('./middleware');
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json()); 
-app.use(express.static(path.join(__dirname, 'public'))); 
+app.use(session({
+    secret: process.env.SESSION_SECRET,
+    resave: false,
+    saveUninitialized: true,
+    name: 'user-session',
+    cookie:{
+      maxAge: 1000 * 60 * 60 * 24 * 30,
+      httpOnly: true,
+    }
+}));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const User = require('./model/user');
 const Lab = require('./model/lab');
@@ -38,7 +52,7 @@ app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 
 //route for home page
-app.get('/', (req, res) => {
+app.get('/', checkLoggedIn, (req, res) => {
   res.render('handlebars/home', {
     title: 'Home Page',
     layout: 'homeLayout',
@@ -46,7 +60,7 @@ app.get('/', (req, res) => {
 });
 
 //route for login
-app.get('/login', (req, res) => {
+app.get('/login', bypassLogin, (req, res) => {
   res.render('handlebars/login', {
     title: 'Login',
     layout: 'login-signupLayout',
@@ -68,10 +82,10 @@ app.post('/login', async (req, res) => {
         loginError: 'Invalid email or password.'
       });
     }
-
     const role = user.role;
     const username = user.username;
-    
+
+    req.session.user = {id : user._id, username: user.username, role: user.role, remember: user.remember};
     let redirectURL;
     if (role === 'Lab Technician') {
       redirectURL = `/dashboard/technician?username=${encodeURIComponent(username)}`;
@@ -92,8 +106,28 @@ app.post('/login', async (req, res) => {
   }
 });
 
+app.get('/logout', (req, res) => {
+  try {
+    if(!req.session.user.remember) {
+      req.session.destroy(err =>{
+        if (err){
+          console.error('Session destruction error:', err);
+          return res.status(500).send('Server error during logout.');
+        }
+        res.clearCookie('user-session');
+        res.redirect('/');
+      });
+    } else {
+      res.redirect('/');
+    }
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).send('Server error during logout.');
+  }
+});
+
 //route for register
-app.get('/register', (req, res) => {
+app.get('/register', checkLoggedIn, (req, res) => {
   res.render('handlebars/register', {
     title: 'Register',
     layout: 'login-signupLayout',
@@ -174,7 +208,7 @@ app.post('/register', async (req, res) => {
 });
 
 //route for dashboard student
-app.get('/dashboard/student', (req, res) => {
+app.get('/dashboard/student', checkStudent, (req, res) => {
   const username = req.query.username || 'Student';
   const role = req.query.role || 'Student';
 
@@ -188,7 +222,7 @@ app.get('/dashboard/student', (req, res) => {
 });
 
 //route for dashboard technician
-app.get('/dashboard/technician', (req, res) => {
+app.get('/dashboard/technician', checkLabTech, (req, res) => {
   const username = req.query.username || 'Lab Technician';
   const role = req.query.role || 'Lab Technician';
 
@@ -202,7 +236,7 @@ app.get('/dashboard/technician', (req, res) => {
 });
 
 // Route for reservation editing
-app.get('/dashboard/technician/edit/:id', (req, res) => {
+app.get('/dashboard/technician/edit/:id', checkLabTech, (req, res) => {
   const id = req.query.id;
 
   res.render('handlebars/dashboard', {
@@ -230,7 +264,7 @@ app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
 });
 
 //route for tech help
-app.get('/dashboard/technician/help', (req, res) => {
+app.get('/dashboard/technician/help', checkLabTech, (req, res) => {
   const { username } = req.query;
 
   res.render('handlebars/help', {
@@ -242,7 +276,7 @@ app.get('/dashboard/technician/help', (req, res) => {
 });
 
 //route for student help
-app.get('/dashboard/student/help', (req, res) => {
+app.get('/dashboard/student/help', checkStudent, (req, res) => {
   const { username } = req.query;
 
   res.render('handlebars/help', {
@@ -254,7 +288,7 @@ app.get('/dashboard/student/help', (req, res) => {
 });
 
 //route for tech profile
-app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], async (req, res) => {
+app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], checkLabTech, async (req, res) => {
   const username = req.query.username;
   //debugging
   /*
@@ -281,7 +315,7 @@ app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile']
 });
 
 //route for student profile
-app.get('/dashboard/student/profile', async (req, res) => {
+app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
   const username = req.query.username;
 
   try {
@@ -400,7 +434,7 @@ function getStatus(resv) {
   }
 });
 
-app.get('/dashboard/technician/reservation-list', async (req, res) => {
+app.get('/dashboard/technician/reservation-list', checkLabTech, async (req, res) => {
   const { username } = req.query;
 
   try {
