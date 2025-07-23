@@ -18,7 +18,6 @@ app.use(session({
     saveUninitialized: true,
     name: 'user-session',
     cookie:{
-      maxAge: 1000 * 60 * 60 * 24 * 30,
       httpOnly: true,
     }
 }));
@@ -69,7 +68,7 @@ app.get('/login', bypassLogin, (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
+  const { email, password, remember } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -84,8 +83,13 @@ app.post('/login', async (req, res) => {
     }
     const role = user.role;
     const username = user.username;
+    req.session.user = {id : user._id, username: user.username, role: user.role, remember: remember === 'on'};
 
-    req.session.user = {id : user._id, username: user.username, role: user.role, remember: user.remember};
+    if(req.session.user.remember){
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+    } else{
+      req.session.cookie.expires = false;
+    }
     let redirectURL;
     if (role === 'Lab Technician') {
       redirectURL = `/dashboard/technician?username=${encodeURIComponent(username)}`;
