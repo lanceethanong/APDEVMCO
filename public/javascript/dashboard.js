@@ -624,8 +624,10 @@ document.getElementById("reserveBtn").onclick = async () => {
     const data = await response.json();
     alert("Reservation successful!");
     seatSelections[key] = new Set();
+    // --- Fix: Always await fetchReservationList then renderSeats ---
     if (typeof renderSeats === 'function') {
-      fetchReservationList().then(renderSeats);
+      await fetchReservationList();
+      renderSeats();
     }
     if (role === 'student') {
       window.location.href = `/dashboard/student/profile?username=${encodeURIComponent(actualUsername)}`;
@@ -639,10 +641,23 @@ document.getElementById("reserveBtn").onclick = async () => {
     const reserveBtn = document.getElementById("reserveBtn");
     if (reserveBtn) {
       reserveBtn.disabled = false;
-      reserveBtn.textContent = "Reserve";
+      if(role === "technician")
+      {
+        reserveBtn.textContent = "Reserve For Student";
+      }
+      else
+        reserveBtn.textContent = "Reserve Slot";
     }
   }
 };
+
+// --- Utility: Render dates as Manila time for display ---
+function toManilaTime(date) {
+  if (!date) return '';
+  const d = new Date(date);
+  d.setHours(d.getHours() + 8);
+  return d;
+}
 
 // Event Listeners
 document.addEventListener('DOMContentLoaded', async function() {
