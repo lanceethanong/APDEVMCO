@@ -44,13 +44,37 @@ const hbs = exphbs.create({
         case 'Scheduled': return 'blue';
         default: return '';
       }
-    }
+    },
+    formatManilaDate(dateStr) {
+      if (!dateStr) return "";
+      let date;
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+        date = new Date(dateStr + "T00:00:00-00:00");
+      } else {
+        date = new Date(dateStr);
+      }
+
+
+      date.setDate(date.getDate() + 1);
+
+      return date.getFullYear()
+        + "-" + String(date.getMonth() + 1).padStart(2, '0')
+        + "-" + String(date.getDate()).padStart(2, '0');
+    },
   }
 });
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 
 //route for home page
+app.get('/', (req, res) => {
+  res.render('handlebars/home', {
+    title: 'Home Page',
+    layout: 'homeLayout',
+  });
+});
+
+//route for login
 app.get('/', checkLoggedIn, (req, res) => {
   res.render('handlebars/home', {
     title: 'Home Page',
@@ -68,7 +92,7 @@ app.get('/login', bypassLogin, (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password, remember } = req.body;
+  const { email, password, remember} = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -81,6 +105,7 @@ app.post('/login', async (req, res) => {
         loginError: 'Invalid email or password.'
       });
     }
+
     const role = user.role;
     const username = user.username;
     req.session.user = {id : user._id, username: user.username, role: user.role, remember: remember === 'on'};
@@ -91,6 +116,7 @@ app.post('/login', async (req, res) => {
       req.session.cookie.expires = false;
     }
     let redirectURL;
+
     if (role === 'Lab Technician') {
       redirectURL = `/dashboard/technician?username=${encodeURIComponent(username)}`;
     } 
@@ -226,7 +252,7 @@ app.get('/dashboard/student', checkStudent, (req, res) => {
 });
 
 //route for dashboard technician
-app.get('/dashboard/technician', checkLabTech, (req, res) => {
+app.get('/dashboard/technician',checkLabTech, (req, res) => {
   const username = req.query.username || 'Lab Technician';
   const role = req.query.role || 'Lab Technician';
 
@@ -262,13 +288,13 @@ app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
     layout: 'dashboard-Layout',
     username,
     role: role === 'technician' ? 'Lab Technician' : 'Student',
-    rooms: [], // labs will be fetched dynamically in frontend
+    rooms: [], 
     selectedLabNumber: labNumber
   });
 });
 
 //route for tech help
-app.get('/dashboard/technician/help', checkLabTech, (req, res) => {
+app.get('/dashboard/technician/help',checkLabTech, (req, res) => {
   const { username } = req.query;
 
   res.render('handlebars/help', {
@@ -280,7 +306,7 @@ app.get('/dashboard/technician/help', checkLabTech, (req, res) => {
 });
 
 //route for student help
-app.get('/dashboard/student/help', checkStudent, (req, res) => {
+app.get('/dashboard/student/help',checkStudent, (req, res) => {
   const { username } = req.query;
 
   res.render('handlebars/help', {
@@ -292,13 +318,9 @@ app.get('/dashboard/student/help', checkStudent, (req, res) => {
 });
 
 //route for tech profile
-app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], checkLabTech, async (req, res) => {
+app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], checkLabTech,async (req, res) => {
   const username = req.query.username;
-  //debugging
-  /*
-  console.log('Technician profile - username from query:', username);
-  */
-  
+
   try {
     const user = await User.findOne({ username, role: 'Lab Technician' });
     if (!user) {
@@ -338,33 +360,33 @@ app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
     };
 
     function parseLocalDateTime(dateInput, timeStr) {
-  const [year, month, day] = new Date(dateInput).toISOString().split('T')[0].split('-').map(Number);
+      const [year, month, day] = new Date(dateInput).toISOString().split('T')[0].split('-').map(Number);
 
-  const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
-  if (!match) return new Date();
+      const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
+      if (!match) return new Date();
 
-  let hour = parseInt(match[1], 10);
-  const minute = match[2] ? parseInt(match[2], 10) : 0;
-  const ampm = match[3].toUpperCase();
+      let hour = parseInt(match[1], 10);
+      const minute = match[2] ? parseInt(match[2], 10) : 0;
+      const ampm = match[3].toUpperCase();
 
-  if (ampm === 'PM' && hour !== 12) hour += 12;
-  if (ampm === 'AM' && hour === 12) hour = 0;
+      if (ampm === 'PM' && hour !== 12) hour += 12;
+      if (ampm === 'AM' && hour === 12) hour = 0;
 
-  return new Date(year, month - 1, day, hour, minute, 0, 0);
-}
+      return new Date(year, month - 1, day, hour, minute, 0, 0);
+    }
 
-function getStatus(resv) {
-  if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
+    function getStatus(resv) {
+      if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
 
-  const start = parseLocalDateTime(resv.date, resv.time_start);
-  const end = parseLocalDateTime(resv.date, resv.time_end);
-  const now = new Date();
+      const start = parseLocalDateTime(resv.date, resv.time_start);
+      const end = parseLocalDateTime(resv.date, resv.time_end);
+      const now = new Date();
 
-  if (resv.status === 'Cancelled') return 'Cancelled';
-  if (now < start) return 'Scheduled';
-  if (now >= start && now <= end) return 'In Progress';
-  return 'Completed';
-}
+      if (resv.status === 'Cancelled') return 'Cancelled';
+      if (now < start) return 'Scheduled';
+      if (now >= start && now <= end) return 'In Progress';
+      return 'Completed';
+    }
 
     const [studentSeats, techSeats] = await Promise.all([
       SeatList.find().populate({
@@ -390,6 +412,7 @@ function getStatus(resv) {
       if (!r || !r.user || r.user.username !== username) continue;
 
       allReservations.push({
+        _id: r._id && r._id.toString ? r._id.toString() : r._id,
         row: seat.row,
         column: seat.column,
         lab: `Lab ${r.lab.number} (${r.lab.class})`,
@@ -407,6 +430,7 @@ function getStatus(resv) {
       if (!r || !r.student || r.student.username !== username) continue;
 
       allReservations.push({
+        _id: r._id && r._id.toString ? r._id.toString() : r._id,
         row: seat.row,
         column: seat.column,
         lab: `Lab ${r.lab.number} (${r.lab.class})`,
@@ -438,7 +462,7 @@ function getStatus(resv) {
   }
 });
 
-app.get('/dashboard/technician/reservation-list', checkLabTech, async (req, res) => {
+app.get('/dashboard/technician/reservation-list',checkLabTech, async (req, res) => {
   const { username } = req.query;
 
   try {
@@ -469,44 +493,43 @@ app.get('/dashboard/technician/reservation-list', checkLabTech, async (req, res)
         populate: [
           { path: 'student', select: 'username' },
           { path: 'lab', select: 'class number' },
-
         ]
       }).lean()
     ]);
 
     function parseLocalDateTime(dateInput, timeStr) {
-  const date = new Date(dateInput);
+      const date = new Date(dateInput);
 
-  const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
-  if (!match) return date;
+      const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
+      if (!match) return date;
 
-  let hour = parseInt(match[1], 10);
-  const minute = match[2] ? parseInt(match[2], 10) : 0;
-  const ampm = match[3].toUpperCase();
+      let hour = parseInt(match[1], 10);
+      const minute = match[2] ? parseInt(match[2], 10) : 0;
+      const ampm = match[3].toUpperCase();
 
-  if (ampm === 'PM' && hour !== 12) hour += 12;
-  if (ampm === 'AM' && hour === 12) hour = 0;
+      if (ampm === 'PM' && hour !== 12) hour += 12;
+      if (ampm === 'AM' && hour === 12) hour = 0;
 
-  date.setHours(hour, minute, 0, 0);
-  return date;
-}
+      date.setHours(hour, minute, 0, 0);
+      return date;
+    }
 
-function getStatus(resv) {
-  if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
+    function getStatus(resv) {
+      if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
 
-  const start = parseLocalDateTime(resv.date, resv.time_start);
-  const end = parseLocalDateTime(resv.date, resv.time_end);
-  const now = new Date();
+      const start = parseLocalDateTime(resv.date, resv.time_start);
+      const end = parseLocalDateTime(resv.date, resv.time_end);
+      const now = new Date();
 
-  if (resv.status === 'Cancelled') return 'Cancelled';
-  if (now < start) return 'Scheduled';
-  if (now >= start && now <= end) return 'In Progress';
-  return 'Completed';
-}
+      if (resv.status === 'Cancelled') return 'Cancelled';
+      if (now < start) return 'Scheduled';
+      if (now >= start && now <= end) return 'In Progress';
+      return 'Completed';
+    }
 
     const combined = [];
 
-    // 🧾 Student Reservations
+    // Student Reservations
     for (const seat of studentSeats) {
       const r = seat.reservation;
       if (!r || !r.user || !r.lab) continue;
@@ -515,7 +538,7 @@ function getStatus(resv) {
       const isPast = status === 'Completed' || status === 'Cancelled';
 
       combined.push({
-        _id: r._id,
+        _id: r._id && r._id.toString ? r._id.toString() : r._id,
         row: seat.row,
         column: seat.column,
         student: r.user.username,
@@ -539,7 +562,7 @@ function getStatus(resv) {
       const isPast = status === 'Completed' || status === 'Cancelled';
 
       combined.push({
-        _id: r._id,
+        _id: r._id && r._id.toString ? r._id.toString() : r._id,
         row: seat.row,
         column: seat.column,
         student: r.student.username,
@@ -635,7 +658,7 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
         if (!r || !r.user || r.user.username !== viewedUser.username) continue;
 
         allReservations.push({
-          _id: r._id,
+          _id: r._id && r._id.toString ? r._id.toString() : r._id,
           row: seat.row,
           column: seat.column,
           lab: `Lab ${r.lab.number} (${r.lab.class})`,
@@ -651,7 +674,7 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
         if (!r || !r.student || r.student.username !== viewedUser.username) continue;
 
         allReservations.push({
-          _id: r._id,
+          _id: r._id && r._id.toString ? r._id.toString() : r._id,
           row: seat.row,
           column: seat.column,
           lab: `Lab ${r.lab.number} (${r.lab.class})`,
@@ -717,30 +740,23 @@ app.delete('/api/reservation/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    let tech = false;
-    let user = await Reservation.findOne({ _id: id });
-    let seat = await SeatList.findOne({ reservation: id });
-
-    if (!user || seat) {
-      user = await TechReservation.findOne({ _id: id });
-      seat = await TechSeatList.findOne({ reservation: id });
-      tech = true;
+    
+    let reservation = await Reservation.findById(id);
+    if (reservation) {
+      await SeatList.deleteMany({ reservation: id });
+      await Reservation.deleteOne({ _id: id });
+      return res.json({ success: true, message: 'Reservation deleted successfully' });
     }
 
-    if (!user || seat) {
-      return res.status(404).json({ error: 'Reservation not found' });
+    
+    let techReservation = await TechReservation.findById(id);
+    if (techReservation) {
+      await TechSeatList.deleteMany({ reservation: id });
+      await TechReservation.deleteOne({ _id: id });
+      return res.json({ success: true, message: 'Reservation deleted successfully' });
     }
 
-    if (tech) {
-      await Reservation.deleteOne({ username: decodedUsername });
-      await SeatList.deleteOne({ username: decodedUsername });
-      res.json({ success: true, message: 'Reservation deleted successfully' });
-    }
-    else {
-      await TechReservation.deleteOne({ username: decodedUsername });
-      await TechSeatListSeatList.deleteOne({ username: decodedUsername });
-      res.json({ success: true, message: 'Reservation deleted successfully' });
-    }
+    return res.status(404).json({ error: 'Reservation not found' });
   } catch (error) {
     console.error('Delete reservation error:', error);
     res.status(500).json({ error: 'Failed to delete reservation' });
@@ -907,7 +923,6 @@ app.post('/api/reservations', async (req, res) => {
       seats
     } = req.body;
 
-
     if (!time_start || !time_end || !username || !labNumber || !date) {
       return res.status(400).json({ 
         error: "Missing required fields: time_start, time_end, user, lab, date" 
@@ -929,13 +944,19 @@ app.post('/api/reservations', async (req, res) => {
     if (!foundLab) {
       return res.status(404).json({ error: "Lab not found" });
     }
+
     
-    const reservationDate = new Date(date);
-    if (isNaN(reservationDate.getTime())) {
-      return res.status(400).json({ error: "Invalid date format" });
+    let reservationDate;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      
+      reservationDate = new Date(date + "T00:00:00+08:00");
+    } else {
+      
+      reservationDate = new Date(date);
     }
 
-    const conflictingReservations = await Reservation.find({
+    // --- OVERLAP FIX ---
+    const overlappingStudentReservations = await Reservation.find({
       lab: foundLab._id,
       date: reservationDate,
       $or: [
@@ -948,24 +969,7 @@ app.post('/api/reservations', async (req, res) => {
       ]
     });
 
-    if (conflictingReservations.length > 0) {
-      const conflictingSeats = await SeatList.find({
-        reservation: { $in: conflictingReservations.map(r => r._id) }
-      });
-
-      const conflictingSeatPositions = conflictingSeats.map(seat => `${seat.row}-${seat.column}`);
-      const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`);
-      
-      const hasConflict = requestedSeatPositions.some(pos => conflictingSeatPositions.includes(pos));
-      
-      if (hasConflict) {
-        return res.status(409).json({ 
-          error: "One or more selected seats are already reserved for this time slot" 
-        });
-      }
-    }
-
-    const techConflictingReservations = await TechReservation.find({
+    const overlappingTechReservations = await TechReservation.find({
       lab: foundLab._id,
       date: reservationDate,
       $or: [
@@ -978,21 +982,27 @@ app.post('/api/reservations', async (req, res) => {
       ]
     });
 
-    if (techConflictingReservations.length > 0) {
-      const techConflictingSeats = await TechSeatList.find({
-        reservation: { $in: techConflictingReservations.map(r => r._id) }
-      });
+    // Collect all seats for those reservations
+    const [studentSeats, techSeats] = await Promise.all([
+      SeatList.find({
+        reservation: { $in: overlappingStudentReservations.map(r => r._id) }
+      }),
+      TechSeatList.find({
+        reservation: { $in: overlappingTechReservations.map(r => r._id) }
+      })
+    ]);
+    const allOccupiedSeatPositions = [
+      ...studentSeats.map(seat => `${seat.row}-${seat.column}`),
+      ...techSeats.map(seat => `${seat.row}-${seat.column}`)
+    ];
 
-      const techConflictingSeatPositions = techConflictingSeats.map(seat => `${seat.row}-${seat.column}`);
-      const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`);
-      
-      const hasTechConflict = requestedSeatPositions.some(pos => techConflictingSeatPositions.includes(pos));
-      
-      if (hasTechConflict) {
-        return res.status(409).json({ 
-          error: "One or more selected seats are already reserved by technician for this time slot" 
-        });
-      }
+    const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`);
+    const hasConflict = requestedSeatPositions.some(pos => allOccupiedSeatPositions.includes(pos));
+
+    if (hasConflict) {
+      return res.status(409).json({ 
+        error: "One or more selected seats are already reserved for this time slot" 
+      });
     }
 
     const reservation = new Reservation({
@@ -1032,19 +1042,19 @@ app.post('/api/reservations', async (req, res) => {
 
   } catch (error) {
     console.error("Reservation Error:", error);
-    
+
     if (error.code === 11000) {
       return res.status(409).json({ 
         error: "Duplicate reservation detected" 
       });
     }
-    
+
     if (error.name === 'ValidationError') {
       return res.status(400).json({ 
         error: "Validation error: " + Object.values(error.errors).map(e => e.message).join(', ')
       });
     }
-    
+
     res.status(500).json({ 
       error: "Internal server error occurred while creating reservation" 
     });
@@ -1140,56 +1150,85 @@ app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
   }
 });
 
-app.put('/api/reservations/:id', async (req, res) => {
+app.get('/api/reservations/:id', async (req, res) => {
   try {
-    const reservation = await Reservation.findByIdAndUpdate(
-      req.params.id,
-      req.body,
-      { new: true, runValidators: true }
-    ).populate('user', 'firstName lastName email')
-     .populate('lab', 'class number');
-    
-    if (!reservation) {
-      return res.status(404).json({ error: 'Reservation not found' });
-    }
-    
-    res.json(reservation);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
-app.delete('/api/reservations/:id', async (req, res) => {
-  const session = await mongoose.startSession();
-  
-  try {
-    await session.withTransaction(async () => {
-      const reservation = await Reservation.findByIdAndDelete(req.params.id, { session });
+    let reservation = await Reservation.findById(req.params.id)
+      .populate('user', 'username email')
+      .populate('lab', 'class number');
+    if (!reservation) {
+      reservation = await TechReservation.findById(req.params.id)
+        .populate('student', 'username email')
+        .populate('lab', 'class number');
       if (!reservation) {
         return res.status(404).json({ error: 'Reservation not found' });
       }
-      
-      await SeatList.deleteMany({ reservation: req.params.id }, { session });
-      
-      res.json({ message: 'Reservation deleted successfully' });
-    });
+    }
+    res.json(reservation);
   } catch (error) {
     res.status(500).json({ error: error.message });
-  } finally {
-    await session.endSession();
   }
 });
 
-// tech Reservations API
-app.get('/api/tech-reservations', async (req, res) => {
+app.put('/api/reservations/:id', async (req, res) => {
   try {
-    const reservations = await TechReservation.find()
-      .populate('technician', 'username email')
-      .populate('student', 'username email')
-      .populate('lab', 'class number');
-    res.json(reservations);
+    // Validate time format and duration
+    const timeRegex = /^(1[0-2]|0?[1-9]):(00|30) (AM|PM)$/i;
+
+    // Convert to 24-hour for duration check
+    function to24Hour(timeStr) {
+      const [time, period] = timeStr.split(' ');
+      const [hours] = time.split(':').map(Number);
+      if (period.toUpperCase() === 'PM' && hours !== 12) return hours + 12;
+      if (period.toUpperCase() === 'AM' && hours === 12) return 0;
+      return hours;
+    }
+
+    const startHour = to24Hour(req.body.time_start);
+    const endHour = to24Hour(req.body.time_end);
+
+    if (endHour <= startHour) {
+      return res.status(400).json({ error: 'Minimum 1 hour duration required' });
+    }
+
+    // Handle date format
+    if (req.body.date && /^\d{4}-\d{2}-\d{2}$/.test(req.body.date)) {
+      req.body.date = new Date(req.body.date + "T00:00:00+08:00");
+    }
+
+    // First update the reservation
+    const reservation = await Reservation.findByIdAndUpdate(
+      req.params.id,
+      {
+        time_start: req.body.time_start,
+        time_end: req.body.time_end,
+        date: req.body.date,
+        lab: req.body.lab
+      },
+      { new: true }
+    ).populate('user', 'username email')
+     .populate('lab', 'class number');
+    
+    if (!reservation) {
+      throw new Error('Reservation not found');
+    }
+
+    // Then update the seat if row/column changed
+    if (req.body.row && req.body.column) {
+      await SeatList.updateOne(
+        { reservation: req.params.id },
+        { 
+          $set: { 
+            row: parseInt(req.body.row),
+            column: parseInt(req.body.column)
+          } 
+        }
+      );
+    }
+
+    res.json(reservation);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(400).json({ error: error.message });
   }
 });
 
