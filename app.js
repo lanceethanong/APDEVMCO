@@ -66,13 +66,6 @@ const hbs = exphbs.create({
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 
-//route for home page
-app.get('/', (req, res) => {
-  res.render('handlebars/home', {
-    title: 'Home Page',
-    layout: 'homeLayout',
-  });
-});
 
 //route for login
 app.get('/', checkLoggedIn, (req, res) => {
