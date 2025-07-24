@@ -16,6 +16,22 @@
       {{> dashboard-sidebar role=role}}
       <main class="content">
         {{{body}}}
+
+
+        {{#if (eq role "Lab Technician")}}
+        <div class="search-wrapper" style="margin: 32px auto 0; max-width: 420px;">
+          <label for="technician-student-search" style="margin-bottom: 5px; font-weight: bold; color: #22543d;">Reserve for Student</label>
+          <input
+            type="text"
+            id="technician-student-search"
+            placeholder="Search for a student by name or email..."
+            autocomplete="off"
+            aria-label="Search students"
+          />
+          <div id="technician-student-search-results"></div>
+          <div id="technician-student-selected" class="selected-student-label"></div>
+        </div>
+        {{/if}}
       </main>
     </div>
     {{> footer }}
