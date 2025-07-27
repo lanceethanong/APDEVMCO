@@ -150,7 +150,7 @@ app.get('/logout', (req, res) => {
 });
 
 //route for register
-app.get('/register', bypassLogin, (req, res) => {
+app.get('/register', (req, res) => {
   res.render('handlebars/register', {
     title: 'Register',
     layout: 'login-signupLayout',
