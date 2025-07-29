@@ -36,3 +36,11 @@ exports.checkStudent = (req, res, next) => {
         res.redirect('/login');
     }
 }
+
+exports.checkAdmin = (req, res, next) => {
+  if (req.session && req.session.user && req.session.user.role === 'Admin') {
+    next();
+  } else {
+    res.redirect('/login');
+  }
+};

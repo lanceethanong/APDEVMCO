@@ -9,7 +9,7 @@ const mongoose = require('mongoose');
 const app = express(); 
 const port = 3000; 
 const connectDB = require('./model/db');
-const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech } = require('./middleware');
+const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech, checkAdmin } = require('./middleware');
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json()); 
 app.use(session({
@@ -68,7 +68,7 @@ app.set('view engine', 'hbs');
 
 
 //route for login
-app.get('/', checkLoggedIn, (req, res) => {
+app.get('/', bypassLogin, (req, res) => {
   res.render('handlebars/home', {
     title: 'Home Page',
     layout: 'homeLayout',
@@ -85,7 +85,7 @@ app.get('/login', bypassLogin, (req, res) => {
 });
 
 app.post('/login', async (req, res) => {
-  const { email, password, remember} = req.body;
+  const { email, password, remember } = req.body;
 
   try {
     const user = await User.findOne({ email });
@@ -101,21 +101,29 @@ app.post('/login', async (req, res) => {
 
     const role = user.role;
     const username = user.username;
-    req.session.user = {id : user._id, username: user.username, role: user.role, remember: remember === 'on'};
+    req.session.user = {
+      id: user._id,
+      username: user.username,
+      role: user.role,
+      remember: remember === 'on'
+    };
 
-    if(req.session.user.remember){
+    if (req.session.user.remember) {
       req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
-    } else{
+    } else {
       req.session.cookie.expires = false;
     }
+
     let redirectURL;
 
-    if (role === 'Lab Technician') {
+    if (role === 'Admin') {
+      redirectURL = `/admin`;
+    } else if (role === 'Lab Technician') {
       redirectURL = `/dashboard/technician?username=${encodeURIComponent(username)}`;
-    } 
-    else if (role === 'Student') {
+    } else if (role === 'Student') {
       redirectURL = `/dashboard/student?username=${encodeURIComponent(username)}`;
-    } 
+    }
+
     return res.redirect(redirectURL);
 
   } catch (err) {
@@ -128,6 +136,86 @@ app.post('/login', async (req, res) => {
     });
   }
 });
+
+
+
+// Admin home page
+app.get('/admin', checkAdmin, (req, res) => {
+  res.render('handlebars/admin', {
+    title: 'Admin Home',
+    layout: 'adminLayout',
+    page: 'home',
+    adminName: req.session.user.username
+  });
+});
+
+// View all lab technicians (shows and clears success message if present)
+app.get('/admin/view-labtech', checkAdmin, async (req, res) => {
+  const techs = await User.find({ role: 'Lab Technician' }).lean();
+  res.render('handlebars/admin', {
+    title: "View Lab Technicians",
+    layout: 'adminLayout',
+    page: 'view',
+    techs,
+    adminName: req.session.user.username
+  });
+});
+
+// Add lab technician (form)
+app.get('/admin/add-labtech', checkAdmin, (req, res) => {
+  res.render('handlebars/admin', {
+    title: 'Add Lab Technician',
+    layout: 'adminLayout',
+    page: 'add',
+    adminName: req.session.user.username
+  });
+});
+
+// Add lab technician (handler)
+app.post('/admin/add-labtech', checkAdmin, async (req, res) => {
+  const { username, email, password } = req.body;
+  const existingUser = await User.findOne({ username });
+  if (existingUser) {
+    return res.render('handlebars/admin', {
+      title: 'Add Lab Technician',
+      layout: 'adminLayout',
+      page: 'add',
+      registerError: 'Username already taken.',
+      adminName: req.session.user.username
+    });
+  }
+  await new User({ username, email, password, role: 'Lab Technician' }).save();
+  req.session.successMessage = 'Lab Technician added successfully!';
+  res.redirect('/admin/view-labtech');
+});
+
+// Remove lab technician (form)
+app.get('/admin/remove-labtech', checkAdmin, (req, res) => {
+  res.render('handlebars/admin', {
+    title: 'Remove Lab Technician',
+    layout: 'adminLayout',
+    page: 'remove',
+    adminName: req.session.user.username
+  });
+});
+
+// Remove lab technician (handler)
+app.post('/admin/remove-labtech', checkAdmin, async (req, res) => {
+  const { username } = req.body;
+  const deleted = await User.deleteOne({ username, role: 'Lab Technician' });
+  if (deleted.deletedCount === 0) {
+    return res.render('handlebars/admin', {
+      title: 'Remove Lab Technician',
+      layout: 'adminLayout',
+      page: 'remove',
+      removeError: 'No such Lab Technician found.',
+      adminName: req.session.user.username
+    });
+  }
+  req.session.successMessage = 'Lab Technician removed successfully!';
+  res.redirect('/admin/view-labtech');
+});
+
 
 app.get('/logout', (req, res) => {
   try {
@@ -158,8 +246,9 @@ app.get('/register', (req, res) => {
   });
 });
 
-app.post('/register', async (req, res) => {
-  const { username, email, password, confirmPassword, role } = req.body;
+app.post('/register', async (req, res) => 
+  {
+  const { username, email, password, confirmPassword } = req.body;
 
   if (password !== confirmPassword) {
     return res.render('handlebars/register', {
@@ -190,15 +279,15 @@ app.post('/register', async (req, res) => {
       });
     }
     if (password.length < 8) {
-  return res.render('handlebars/register', {
-    layout: 'login-signupLayout',
-    title: 'Register',
-    page: 'register',
-    registerError: 'Password must be at least 8 characters long.'
-  });
-      }
+      return res.render('handlebars/register', {
+        layout: 'login-signupLayout',
+        title: 'Register',
+        page: 'register',
+        registerError: 'Password must be at least 8 characters long.'
+      });
+    }
 
-    const normalizedRole = role === 'lab_technician' ? 'Lab Technician' : 'Student';
+    const normalizedRole = 'Student'; // always Student
 
     const newUser = new User({
       username,
@@ -212,11 +301,8 @@ app.post('/register', async (req, res) => {
 
     await newUser.save();
     console.log('New user registered:', newUser);
-    
-    const redirectURL = normalizedRole === 'Lab Technician'
-      ? `/dashboard/technician?username=${encodeURIComponent(username)}`
-      : `/dashboard/student?username=${encodeURIComponent(username)}`;
 
+    const redirectURL = `/dashboard/student?username=${encodeURIComponent(username)}`;
     res.redirect(redirectURL);
 
   } catch (err) {
