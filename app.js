@@ -9,6 +9,7 @@ const mongoose = require('mongoose');
 const app = express(); 
 const port = 3000; 
 const connectDB = require('./model/db');
+const bcrypt = require('bcrypt');
 const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech, checkAdmin } = require('./middleware');
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json()); 
@@ -90,7 +91,7 @@ app.post('/login', async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if (!user || user.password !== password) {
+    if (!user || !(await bcrypt.compare(password, user.password))) {
       return res.status(401).render('handlebars/login', {
         layout: 'login-signupLayout',
         title: 'Login',
@@ -184,7 +185,8 @@ app.post('/admin/add-labtech', checkAdmin, async (req, res) => {
       adminName: req.session.user.username
     });
   }
-  await new User({ username, email, password, role: 'Lab Technician' }).save();
+  const hashedPassword = await bcrypt.hash(password, 10);
+  await new User({ username, email, password: hashedPassword, role: 'Lab Technician' }).save();
   req.session.successMessage = 'Lab Technician added successfully!';
   res.redirect('/admin/view-labtech');
 });
@@ -246,8 +248,7 @@ app.get('/register', (req, res) => {
   });
 });
 
-app.post('/register', async (req, res) => 
-  {
+app.post('/register', async (req, res) => {
   const { username, email, password, confirmPassword } = req.body;
 
   if (password !== confirmPassword) {
@@ -269,6 +270,7 @@ app.post('/register', async (req, res) =>
         registerError: 'Email already in use.'
       });
     }
+
     const existingUsername = await User.findOne({ username });
     if (existingUsername) {
       return res.render('handlebars/register', {
@@ -278,6 +280,7 @@ app.post('/register', async (req, res) =>
         registerError: 'Username already taken.'
       });
     }
+
     if (password.length < 8) {
       return res.render('handlebars/register', {
         layout: 'login-signupLayout',
@@ -287,20 +290,19 @@ app.post('/register', async (req, res) =>
       });
     }
 
-    const normalizedRole = 'Student'; // always Student
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     const newUser = new User({
       username,
       email,
-      password,
-      role: normalizedRole,
+      password: hashedPassword,
+      role: 'Student',
       description: '',
       picture: 'picture.jpg',
       remember: false
     });
 
     await newUser.save();
-    console.log('New user registered:', newUser);
 
     const redirectURL = `/dashboard/student?username=${encodeURIComponent(username)}`;
     res.redirect(redirectURL);
@@ -315,6 +317,7 @@ app.post('/register', async (req, res) =>
     });
   }
 });
+
 
 //route for dashboard student
 app.get('/dashboard/student', checkStudent, (req, res) => {
@@ -853,12 +856,14 @@ app.post('/api/users/:username/change-password', async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-
-    if (user.password !== currentPassword) {
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!passwordMatch) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    user.password = newPassword;
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    user.password = hashedNewPassword;
+
     await user.save();
 
     res.json({ success: true, message: 'Password updated successfully' });
