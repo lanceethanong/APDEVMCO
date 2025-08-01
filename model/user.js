@@ -32,7 +32,7 @@ const userSchema = new Schema({
   },
     role:{
         type: String,
-        enum: ['Student', 'Lab Technician'],
+        enum: ['Student', 'Lab Technician','Admin'],
     },
 }, {timestamps: true});
 

@@ -7,12 +7,9 @@ let currentMonth = new Date();
 let rooms = [];
 let searchTimeout;
 let currentReservationList = [];
-
-// Technician Reservation Feature Variables
 let technicianSelectedStudent = null;
 let technicianStudentVerifyError = null;
 
-// Parse URL info like /dashboard/student/lab/1?username=George
 function getURLParams() {
   const pathMatch = window.location.pathname.match(/\/dashboard\/(student|technician)(?:\/lab\/(\d+))?/);
   const usernameParam = new URLSearchParams(window.location.search).get('username');
@@ -489,7 +486,6 @@ function renderSeats() {
   }
   table.appendChild(tbody);
 }
-// ----------------------------------------------------------
 
 function updateReserveButton() {
   document.getElementById("reserveBtn").disabled = !(selectedRoom && selectedDate);
@@ -651,7 +647,6 @@ document.getElementById("reserveBtn").onclick = async () => {
   }
 };
 
-// --- Utility: Render dates as Manila time for display ---
 function toManilaTime(date) {
   if (!date) return '';
   const d = new Date(date);
