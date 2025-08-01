@@ -1,3 +1,16 @@
+// Log errors to the database (only in JS files containing try-catch blocks)
+function logError(error, source) {
+  fetch('/api/log-error', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: error.message || String(error),
+      stack: error.stack || null,
+      source: source || 'Unknown',
+    })
+  }).catch(console.warn);
+}
+
 function getUsername() {
 
   //Gets the user to be displayed
@@ -57,6 +70,7 @@ async function searchUsers(query) {
       console.error('Search failed:', error);
       resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
       resultsContainer.classList.add('show');
+      logError(error, 'searchUsers(query): searchTimeout');
     }
   }, 300);
 }
@@ -95,6 +109,7 @@ async function confirmDeleteAccount() {
   } catch (error) { //Catches any errors 
     console.error('Error deleting account:', error);
     alert('An error occurred while trying to delete your account. Please try again.');
+    logError(error, 'confirmDeleteAccount()');
   } finally {
     hideDeleteModal(); //removes the delete modal
   }
@@ -154,6 +169,7 @@ async function saveProfileChanges() {
   } catch (error) {
     console.error('Error updating profile:', error);
     alert('An error occurred while updating your profile. Please try again.');
+    logError(error, 'saveProfileChanges()');
   }
 }
 
@@ -262,6 +278,7 @@ async function changePassword() {
   } catch (error) {
     console.error('Error changing password:', error);
     alert('An error occurred while changing your password. Please try again.');
+    logError(error, 'changePassword()');
   }
 }
 // toggles the password inputted

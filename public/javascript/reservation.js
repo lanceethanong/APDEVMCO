@@ -1,3 +1,16 @@
+// Log errors to the database (only in JS files containing try-catch blocks)
+function logError(error, source) {
+  fetch('/api/log-error', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: error.message || String(error),
+      stack: error.stack || null,
+      source: source || 'Unknown',
+    })
+  }).catch(console.warn);
+}
+
 async function del(id) {
   if (!id) {
     alert("No reservation ID provided.");
@@ -29,13 +42,16 @@ async function del(id) {
       try {
         const err = await response.json();
         msg = err.error || msg;
-      } catch (e) {}
+      } catch (e) {
+        logError(e, 'del(id)');
+      }
       alert(msg);
       console.error('Failed to delete:', response.status, msg);
     }
   } catch (error) {
     alert("Error deleting reservation.");
     console.error('Error:', error);
+    logError(error, 'del(id)');
   }
 }
 
@@ -118,6 +134,7 @@ async function openEditModal(reservation) {
   } catch (error) {     
     console.error('Error opening edit modal:', error);     
     alert('Failed to load lab information');   
+    logError(error, 'openEditModal()');
   } 
 }
 
@@ -142,6 +159,7 @@ async function edit(id) {
   } catch (error) {
     console.error('Error:', error);
     alert("Error loading reservation for editing.");
+    logError(error, 'edit(id)');
   }
 }
 
@@ -197,6 +215,7 @@ async function checkIfCurrentReservation(reservationId, labId, row, column, date
     
   } catch (error) {
     console.error('Error checking current reservation:', error);
+    logError(error, 'checkIfCurrentReservation(reservationId, labId, row, column, date, time_start, time_end)');
     return false;
   }
 }
@@ -251,6 +270,7 @@ document.getElementById('edit-reservation-form').addEventListener('submit', asyn
     }
   } catch (error) {
     console.error('Error checking reservation status:', error);
+    logError(error, 'Form submission (reservation.js)');
     return alert("Error verifying reservation status.");
   }
 
@@ -313,6 +333,7 @@ document.getElementById('edit-reservation-form').addEventListener('submit', asyn
     location.reload();
   } catch (error) {
     console.error('Update error:', error);
+    logError(error, 'Form submission (reservation.js)');
     alert(error.message);
   }
 });

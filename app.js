@@ -7,7 +7,7 @@ const exphbs = require('express-handlebars');
 const path = require('path'); 
 const mongoose = require('mongoose');
 const app = express(); 
-const port = 3000; 
+const port = 3000;
 const connectDB = require('./model/db');
 const bcrypt = require('bcrypt');
 const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech, checkAdmin } = require('./middleware');
@@ -30,6 +30,7 @@ const Reservation = require('./model/reservation');
 const TechReservation = require('./model/tech_reservation');
 const SeatList = require('./model/seat_list');
 const TechSeatList = require('./model/tech_seat_list');
+const ErrorLog = require('./model/error_log');
 
 const hbs = exphbs.create({
   extname: '.hbs',
@@ -67,6 +68,19 @@ const hbs = exphbs.create({
 app.engine('hbs', hbs.engine);
 app.set('view engine', 'hbs');
 
+async function logError(error, source, user) {
+  try {
+    const log = new ErrorLog({
+      message: error.message,
+      stack: error.stack,
+      source: source || null,
+      user: user || null
+    });
+    await log.save();
+  } catch (loggingError) {
+    console.error('Failed to log error:', loggingError);
+  }
+}
 
 //route for login
 app.get('/', bypassLogin, (req, res) => {
@@ -797,6 +811,27 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
   }
 });
 
+// Log errors
+app.post('/api/log-error', async (req, res) => {
+  try {
+    const { message, stack, source } = req.body;
+    const user = req.session.user || null;
+
+    await logError(
+      {
+        message,
+        stack,
+      },
+      source,
+      user
+    );
+
+    res.sendStatus(204);
+  } catch (err) {
+    console.error('Failed to log error:', err);
+    res.sendStatus(500);
+  }
+});
 
 // Delete users
 app.delete('/api/users/:username', async (req, res) => {

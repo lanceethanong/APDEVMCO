@@ -7,9 +7,25 @@ let currentMonth = new Date();
 let rooms = [];
 let searchTimeout;
 let currentReservationList = [];
+
+// Technician Reservation Feature Variables
 let technicianSelectedStudent = null;
 let technicianStudentVerifyError = null;
 
+// Log errors to the database (only in JS files containing try-catch blocks)
+function logError(error, source) {
+  fetch('/api/log-error', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: error.message || String(error),
+      stack: error.stack || null,
+      source: source || 'Unknown',
+    })
+  }).catch(console.warn);
+}
+
+// Parse URL info like /dashboard/student/lab/1?username=George
 function getURLParams() {
   const pathMatch = window.location.pathname.match(/\/dashboard\/(student|technician)(?:\/lab\/(\d+))?/);
   const usernameParam = new URLSearchParams(window.location.search).get('username');
@@ -60,6 +76,7 @@ async function technicianStudentSearch(query) {
       console.error('Student search failed:', error);
       resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
       resultsContainer.classList.add('show');
+      logError(error, 'technicianStudentSearch(query): searchTimeout');
     }
   }, 300);
 }
@@ -116,6 +133,7 @@ function technicianSearchStudentsForReservation(query) {
       console.error('Technician student search failed:', error);
       resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
       resultsContainer.classList.add('show');
+      logError(error, 'window.technicianStudentSearchTimeout');
     }
   }, 300);
 }
@@ -213,6 +231,7 @@ async function searchUsers(query) {
       console.error('Search failed:', error);
       resultsContainer.innerHTML = '<div class="search-result-item">Error loading results</div>';
       resultsContainer.classList.add('show');
+      logError(error, 'searchUsers(query): searchTimeout');
     }
   }, 300);
 }
@@ -278,6 +297,7 @@ async function fetchRoomsAndSelect() {
   } catch (error) {
     console.error('Failed to load labs:', error);
     document.getElementById("rooms").innerHTML = "<p style='color:red'>Failed to load rooms</p>";
+    logError(error, 'fetchRoomsAndSelect()');
   }
 }
 function updateClock() {
@@ -366,6 +386,7 @@ async function fetchReservationList() {
   } catch (e){
     currentReservationList = [];
     console.error('Failed to fetch reservations:', e);
+    logError(e, 'fetchReservationList()');
   }
 }
 
@@ -486,6 +507,7 @@ function renderSeats() {
   }
   table.appendChild(tbody);
 }
+// ----------------------------------------------------------
 
 function updateReserveButton() {
   document.getElementById("reserveBtn").disabled = !(selectedRoom && selectedDate);
@@ -609,10 +631,12 @@ document.getElementById("reserveBtn").onclick = async () => {
         const errorData = await response.json();
         errorMessage = errorData.message || errorData.error || errorMessage;
       } catch (e) {
+        logError(e, 'Reserve button onclick (dashboard.js)');
         try {
           errorMessage = await response.text();
         } catch (e2) {
           errorMessage = `HTTP ${response.status} - ${response.statusText}`;
+          logError(e2, 'Reserve button onclick (dashboard.js)');
         }
       }
       throw new Error(errorMessage);
@@ -633,6 +657,7 @@ document.getElementById("reserveBtn").onclick = async () => {
   } catch (error) {
     console.error("Full error object:", error);
     alert(`Failed to reserve slots: ${error.message}`);
+    logError(error, 'Reserve button onclick (dashboard.js)');
   } finally {
     const reserveBtn = document.getElementById("reserveBtn");
     if (reserveBtn) {
@@ -647,6 +672,7 @@ document.getElementById("reserveBtn").onclick = async () => {
   }
 };
 
+// --- Utility: Render dates as Manila time for display ---
 function toManilaTime(date) {
   if (!date) return '';
   const d = new Date(date);
