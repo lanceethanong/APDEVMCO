@@ -1509,3 +1509,5 @@ connectDB().then(() => {
     console.log(`Server is running on http://localhost:${port}`);
   }).on('error', err => console.log('Server startup failed:', err));
 });
+
+module.exports = app;
