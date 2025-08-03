@@ -59,15 +59,22 @@
                     </p>
                   </div>
                   {{#unless isPast}}
-                  <div class="actions">
-                    <button class="edit-btn" onclick="edit('{{_id}}')" type="button">Edit</button>
-                    {{#if showDelete}}
-                      <button class="delete-btn disabled" type="button" disabled>Delete</button>
-                    {{else}}
-                      <button class="delete-btn" onclick="del('{{_id}}')" type="button">Delete</button>
-                    {{/if}}
-                  </div>
-                  {{/unless}}
+                    <div class="actions">
+                      {{#if (eq status "In Progress")}}
+                        
+                        <button class="edit-btn disabled" type="button" disabled>Edit</button>
+                        <button class="delete-btn disabled" type="button" disabled>Delete</button>
+                      {{else}}
+                        
+                        <button class="edit-btn" onclick="edit('{{_id}}')" type="button">Edit</button>
+                        {{#if showDelete}}
+                          <button class="delete-btn disabled" type="button" disabled>Delete</button>
+                        {{else}}
+                          <button class="delete-btn" onclick="del('{{_id}}')" type="button">Delete</button>
+                        {{/if}}
+                      {{/if}}
+                    </div>
+                  {{/unless}}       
                 </div>
                 {{/each}}
               </div>
@@ -101,7 +108,7 @@
           </div>
           {{/if}}
 
-          <!-- Reservation Edit Modal -->
+          
           <div id="edit-modal" class="modal" style="display:none;">
             <div class="modal-content">
               <h2>Edit Reservation</h2>
@@ -240,7 +247,7 @@
           basePath = `/dashboard/${normalizedRole}/profile`;
           break;
         case 'logout':
-          window.location.href = '/login';
+          window.location.href = '/logout';
           return;
         case 'help':
           basePath = `/dashboard/${normalizedRole}/help`;
@@ -252,11 +259,11 @@
       window.location.href = `${basePath}?username=${encodeURIComponent(username)}`;
     }
 
-    // Proper Manila date formatting without +1 day adjustment
+    //Time helper
     function formatManilaDate(dateStr) {
       if (!dateStr) return "";
       const date = new Date(dateStr);
-      // Manila is UTC+8
+
       const manilaOffset = 8 * 60 * 60 * 1000;
       const manilaTime = new Date(date.getTime() + manilaOffset);
       
@@ -272,7 +279,7 @@
       });
     });
 
-    // Make functions globally available
+    //Global functions
     window.toggleSidebar = toggleSidebar;
     window.navigate = navigate;
     window.showDeleteModal = showDeleteModal;
@@ -282,7 +289,7 @@
     window.searchUsers = searchUsers;
     window.viewUserProfile = viewUserProfile;
   </script>
-
+  
   <script src="/javascript/profile.js"></script>
   <script src="/javascript/dashboard.js"></script>
   <script src="/javascript/reservation.js"></script>

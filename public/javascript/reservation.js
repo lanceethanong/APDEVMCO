@@ -337,7 +337,7 @@ document.getElementById('edit-reservation-form').addEventListener('submit', asyn
     alert(error.message);
   }
 });
-
+//Global functions
 window.edit = edit;
 window.closeEditModal = closeEditModal;
 window.del = del;

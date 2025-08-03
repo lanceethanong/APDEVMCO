@@ -15,13 +15,20 @@
         <p class="status"><strong>Status:</strong> <span class="status {{statusClass status}}">{{status}}</span></p>
       </div>
 
-      {{#unless isPast}}
+        {{#unless isPast}}
         <div class="actions">
-          <button class="edit-btn" onclick="edit('{{_id}}', true)" type="button">Edit</button>
-          {{#if showDelete}}
-            <button class="delete-btn" onclick="del('{{_id}}')" type="button">Delete</button>
-          {{else}}
+          {{#if (eq status "In Progress")}}
+         
+            <button class="edit-btn disabled" type="button" disabled>Edit</button>
             <button class="delete-btn disabled" type="button" disabled>Delete</button>
+          {{else}}
+     
+            <button class="edit-btn" onclick="edit('{{_id}}', true)" type="button">Edit</button>
+            {{#if showDelete}}
+              <button class="delete-btn" onclick="del('{{_id}}')" type="button">Delete</button>
+            {{else}}
+              <button class="delete-btn disabled" type="button" disabled>Delete</button>
+            {{/if}}
           {{/if}}
         </div>
       {{/unless}}

@@ -60,12 +60,14 @@
   cursor: pointer;
 }
 
-.delete-btn.disabled {
+.delete-btn.disabled, .edit-btn.disabled {
   background-color: #6c757d; 
   opacity: 1;                
   cursor: not-allowed;
   pointer-events: none;
 }
+
+
 
 .success-message {
   background: #d4edda;

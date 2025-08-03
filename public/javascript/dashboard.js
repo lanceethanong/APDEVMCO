@@ -1,14 +1,14 @@
-// Dashboard logic (calendar + seat booking)
+// vairables
 let selectedRoom = null;
 let selectedLabNumber = null;
 let selectedDate = null;
 let seatSelections = {};
-let currentMonth = new Date();
+let currentMonth = new Date(); //dynamically updates to current day 
 let rooms = [];
 let searchTimeout;
 let currentReservationList = [];
 
-// Technician Reservation Feature Variables
+// Technician Search for Student
 let technicianSelectedStudent = null;
 let technicianStudentVerifyError = null;
 
@@ -25,7 +25,7 @@ function logError(error, source) {
   }).catch(console.warn);
 }
 
-// Parse URL info like /dashboard/student/lab/1?username=George
+// just for proper url format
 function getURLParams() {
   const pathMatch = window.location.pathname.match(/\/dashboard\/(student|technician)(?:\/lab\/(\d+))?/);
   const usernameParam = new URLSearchParams(window.location.search).get('username');
@@ -36,31 +36,32 @@ function getURLParams() {
   };
 }
 
-// Technician: Get reservation ID from URL to edit
+// Get reservation ID from URL to edit
 function getReservationID() {
   const match = window.location.pathname.match(/\/edit\/([^\/?#]+)/);
   return match ? match[1] : null;
 }
 
-// Technician: Search and select a student to reserve for
+// Search and select a student to reserve for
 async function technicianStudentSearch(query) {
   const resultsContainer = document.getElementById('technician-search-results');
-  if (!query || query.length < 2) {
+  if (!query || query.length < 2) { // Basically if theres no matches 
     resultsContainer.innerHTML = '';
     resultsContainer.classList.remove('show');
     return;
   }
-  clearTimeout(searchTimeout);
+  clearTimeout(searchTimeout); //error
   searchTimeout = setTimeout(async () => {
     try {
-      const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`);
+      const response = await fetch(`/api/users/search/${encodeURIComponent(query)}`); 
       const users = await response.json();
-      const studentUsers = users.filter(user => user.role === "Student");
-      if (studentUsers.length === 0) {
+      const studentUsers = users.filter(user => user.role === "Student"); // filters search results to only look for students 
+      if (studentUsers.length === 0) { //no results found 
         resultsContainer.innerHTML = '<div class="search-result-item">No students found</div>';
         resultsContainer.classList.add('show');
         return;
       }
+      //Students the match the search parameters 
       resultsContainer.innerHTML = studentUsers.map(user => `
         <div class="search-result-item" data-userid="${user._id}" onclick="selectTechnicianStudent('${user._id}', '${user.username}', '${user.email}')">
           <img src="/assets/profile.png" alt="${user.username}" class="search-result-pic">
@@ -81,10 +82,10 @@ async function technicianStudentSearch(query) {
   }, 300);
 }
 
-// Technician: Student search for reservation (dropdown, keyboard nav)
+// Student search for reservation(helper function)
 let techStudentSelectedIndex = -1;
 function technicianSearchStudentsForReservation(query) {
-  const resultsContainer = document.getElementById('technician-student-search-results');
+  const resultsContainer = document.getElementById('technician-student-search-results'); //Shows all reservations 
   techStudentSelectedIndex = -1;
 
   if (!query || query.length < 2) {
@@ -137,6 +138,8 @@ function technicianSearchStudentsForReservation(query) {
     }
   }, 300);
 }
+
+//Gets the student selected and makes it the active user(helper function)
 function setActiveTechStudentResult(idx) {
   const resultsContainer = document.getElementById('technician-student-search-results');
   const items = Array.from(resultsContainer.querySelectorAll('.search-result-item'));
@@ -150,10 +153,14 @@ function setActiveTechStudentResult(idx) {
     }
   });
 }
+
+//Dropdown tab for better and smoother selection process(helper function)
 function technicianStudentDropdownKeyHandler(e) {
   const resultsContainer = document.getElementById('technician-student-search-results');
   if (!resultsContainer.classList.contains('show')) return;
   const items = Array.from(resultsContainer.querySelectorAll('.search-result-item'));
+
+  //Onclick commands 
   if (e.key === 'ArrowDown') {
     e.preventDefault();
     let next = (techStudentSelectedIndex + 1) % items.length;
@@ -170,6 +177,8 @@ function technicianStudentDropdownKeyHandler(e) {
     resultsContainer.classList.remove('show');
   }
 }
+
+//Selects the student(helper function)
 function selectTechnicianStudent(studentId, username, email) {
   technicianSelectedStudent = { _id: studentId, username, email };
   const input = document.getElementById("technician-student-search");
@@ -179,6 +188,8 @@ function selectTechnicianStudent(studentId, username, email) {
   document.getElementById('technician-student-selected').textContent = `Selected Student: ${username} (${email})`;
   technicianStudentVerifyError = null;
 }
+
+//resets the student(helper function)
 function clearTechnicianStudent() {
   technicianSelectedStudent = null;
   const input = document.getElementById("technician-student-search");
@@ -187,7 +198,7 @@ function clearTechnicianStudent() {
   document.getElementById('technician-student-selected').textContent = '';
 }
 
-// Search for users (top search bar)
+// Search for users(Top search bar(not for reservation))
 let searchSelectedIndex = -1;
 async function searchUsers(query) {
   const resultsContainer = document.getElementById('search-results');
@@ -235,6 +246,8 @@ async function searchUsers(query) {
     }
   }, 300);
 }
+
+//Shows the results from the query
 function setActiveSearchResult(idx) {
   const resultsContainer = document.getElementById('search-results');
   const items = Array.from(resultsContainer.querySelectorAll('.search-result-item'));
@@ -268,6 +281,8 @@ function searchDropdownKeyHandler(e) {
     resultsContainer.classList.remove('show');
   }
 }
+
+//Allows user to view searched user profile
 function viewUserProfile(username) {
   const currentRole = document.body.dataset.role.includes('Technician') ? 'technician' : 'student';
   const currentUsername = document.body.dataset.username;
@@ -277,29 +292,31 @@ function viewUserProfile(username) {
 // Fetch labs/rooms
 async function fetchRoomsAndSelect() {
   try {
-    const res = await fetch('/api/labs');
+    const res = await fetch('/api/labs'); //gets all the labs
     const data = await res.json();
-    rooms = data.map(lab => ({
+    rooms = data.map(lab => ({ //Maps out all relevant fields of each lab
       id: lab._id,
       number: lab.number,
       name: `Lab ${lab.number} (${lab.class})`
     }));
-    rooms.sort((a, b) => a.number - b.number);
+    rooms.sort((a, b) => a.number - b.number); //Sorts the labs based on number
     const { labNumber } = getURLParams();
-    if (labNumber) {
+    if (labNumber) { //Tries to find a lab based on numner
       const found = rooms.find(l => l.number === labNumber);
-      if (found) {
+      if (found) { //Displays the lab if found
         selectedRoom = found.name;
         selectedLabNumber = found.number;
       }
     }
-    renderRooms();
+    renderRooms(); //Renders the rooms 
   } catch (error) {
     console.error('Failed to load labs:', error);
     document.getElementById("rooms").innerHTML = "<p style='color:red'>Failed to load rooms</p>";
     logError(error, 'fetchRoomsAndSelect()');
   }
 }
+
+//Clock function
 function updateClock() {
   const now = new Date();
   document.getElementById("clock").textContent =
@@ -307,16 +324,16 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
-
+//Renders all rooms
 function renderRooms() {
   const container = document.getElementById("rooms");
   container.innerHTML = "";
-  const { role, username } = getURLParams();
+  const { role, username } = getURLParams(); //URL parameters 
   rooms.forEach(lab => {
     const div = document.createElement("div");
     div.textContent = lab.name;
     div.className = selectedRoom === lab.name ? "room-item selected" : "room-item";
-    div.onclick = () => {
+    div.onclick = () => { // When a user clicks on a lab allow for the front and backend to display relevant information of that lab
       selectedRoom = lab.name;
       selectedLabNumber = lab.number;
       renderRooms();
@@ -325,44 +342,49 @@ function renderRooms() {
       updateReserveButton();
       window.history.pushState({}, '', `/dashboard/${role}/lab/${lab.number}?username=${encodeURIComponent(username)}`);
     };
-    container.appendChild(div);
+    container.appendChild(div); // makes room for next lab
   });
 }
-
+//Monthly calendar
 function renderMonth() {
   document.getElementById("monthLabel").textContent = currentMonth.toLocaleString("default", {
     month: "long",
     year: "numeric"
   });
 }
+
+//Changes month
 function changeMonth(offset) {
   currentMonth.setMonth(currentMonth.getMonth() + offset);
   renderMonth();
   renderCalendar();
 }
+
+//Generates a calendar
 function renderCalendar() {
   const calendar = document.getElementById("calendar");
   calendar.innerHTML = "";
-  const today = new Date();
+  const today = new Date(); //gets the current date and time 
   today.setHours(0, 0, 0, 0);
   const limit = new Date(today);
-  limit.setDate(today.getDate() + 7);
+  limit.setDate(today.getDate() + 7); //Only show 7 days at a time 
 
-  const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+  const start = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1); //Current parameters
   const startDay = start.getDay();
   let date = new Date(start);
   date.setDate(date.getDate() - startDay);
-
+//Displays date boxes(42 by default)
   for (let i = 0; i < 42; i++) {
     const key = date.toDateString();
     const div = document.createElement("div");
-    const isPast = date < today;
-    const isBeyond = date > limit;
+    const isPast = date < today; //if date is past
+    const isBeyond = date > limit; //if date is beyond the 7 days
     const isCurrentMonth = date.getMonth() === currentMonth.getMonth();
     const isSelected = selectedDate === key;
+    //Disables date element from being selected 
     if (!isCurrentMonth || isPast || isBeyond) {
       div.className = "disabled";
-    } else {
+    } else { //User can click on a date and generate information from that date
       div.className = "hoverable";
       div.onclick = () => {
         selectedDate = key;
@@ -374,26 +396,28 @@ function renderCalendar() {
     }
     if (isSelected) div.classList.add("active");
     div.innerHTML = `<div>${date.toLocaleString("default", { weekday: "short" })}</div><div>${date.getDate()}</div>`;
-    calendar.appendChild(div);
+    calendar.appendChild(div); //Makes room for next day
     date.setDate(date.getDate() + 1);
   }
 }
-
+//Gets all the reservations from the database
 async function fetchReservationList() {
   try {
-    const res = await fetch('/api/seat-lists');
-    currentReservationList = await res.json();
+    const res = await fetch('/api/seat-lists'); //gets the resevrations
+    currentReservationList = await res.json(); 
   } catch (e){
     currentReservationList = [];
     console.error('Failed to fetch reservations:', e);
     logError(e, 'fetchReservationList()');
   }
 }
-
+//Gets key(date and time)(helper)
 function getKey() {
   if (!selectedDate || !selectedRoom) return null;
   return `${new Date(selectedDate).toISOString().split("T")[0]}_${selectedRoom}`;
 }
+
+//Converts time to human readable format
 function timeToIndex(apiTime) {
   const time = apiTime.split(" ")[0].split(":");
   let index = (apiTime == "7 PM") ? 24 : (time[0] < 7) ? (parseInt(time[0]) - 1) * 2 + 12 : (parseInt(time[0]) - 7) * 2;
@@ -401,6 +425,8 @@ function timeToIndex(apiTime) {
     index++;
   return index;
 }
+
+//Associates a slot to a certain time 
 function slotToTime(slot) {
   const baseHour = 7;
   const totalMinutes = baseHour * 60 + slot * 30;
@@ -411,22 +437,25 @@ function slotToTime(slot) {
   const timeStr = `${String(displayHour).padStart(2, '0')}:${String(minutes).padStart(2, '0')} ${period}`;
   return timeStr;
 }
+
+//Seat Information
 function renderSeatInfo() {
   document.getElementById("selectedInfo").textContent = `Seat availability at Lab Room: ${selectedRoom || "(not selected)"}`;
 }
 
+//Generates the seats per lab per day
 function renderSeats() {
   const table = document.getElementById("seatTable");
   table.innerHTML = "";
-  const key = getKey();
-  const hours = Array.from({ length: 12 }, (_, i) => `${7 + i}:00${i < 5 ? "am" : "pm"}`);
-  const slots = hours.length * 2;
+  const key = getKey(); //gets the date and time 
+  const hours = Array.from({ length: 12 }, (_, i) => `${7 + i}:00${i < 5 ? "am" : "pm"}`); //Labs available from 7AM-7PM
+  const slots = hours.length * 2; //Divided by 2 so that each hour has 2 time slots 
   const now = new Date();
   const todayKey = new Date().toDateString();
-  const isToday = todayKey === selectedDate;
-  const selected = key && seatSelections[key] ? seatSelections[key] : new Set();
+  const isToday = todayKey === selectedDate; //Checks what day is today
+  const selected = key && seatSelections[key] ? seatSelections[key] : new Set(); //Selected seat
 
-  // Only show reservations for the currently selected lab AND currently selected date
+  //Makes sure that the frontend only shows reservations for the currently selected lab and currently selected date
   const filteredReservationList = Array.isArray(currentReservationList) ? currentReservationList.filter(seatObj => {
     if (!seatObj.reservation || !seatObj.reservation.lab || !seatObj.reservation.date) return false;
     // Filter by lab
@@ -434,7 +463,7 @@ function renderSeats() {
       typeof seatObj.reservation.lab === 'object'
         ? seatObj.reservation.lab.number === selectedLabNumber
         : seatObj.reservation.lab === selectedLabNumber;
-    // Filter by date (Y-M-D match)
+    // Filter by date
     const seatDate = new Date(seatObj.reservation.date);
     const selDate = selectedDate ? new Date(selectedDate) : null;
     const isDate = selDate
@@ -452,17 +481,20 @@ function renderSeats() {
   table.appendChild(header);
 
   const tbody = document.createElement("tbody");
-  const rows = 7;
+  //35 seats in total(7x5)
+  const rows = 7; 
   const cols = 5;
+
 
   for (let row = 0; row < rows; row++) {
     for (let col = 0; col < cols; col++) {
       const seatNum = row * cols + col + 1;
       if (seatNum > 35) break;
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>Seat ${seatNum}</td>`;
+      const tr = document.createElement("tr"); 
+      tr.innerHTML = `<td>Seat ${seatNum}</td>`; //seat number
 
       let listMatch = 0;
+      //Just to make sure that each seat dosent interfere with the other 
       while (listMatch != filteredReservationList.length) {
         if (((filteredReservationList[listMatch].row - 1) == row && (filteredReservationList[listMatch].column - 1) == col))
           break;
@@ -470,15 +502,18 @@ function renderSeats() {
           listMatch++;
       }
 
+      //Associates a slot to each seat 
       for (let slot = 0; slot < slots; slot++) {
         const td = document.createElement("td");
-        const slotKey = `r${row + 1}-c${col + 1}-s${slot}`;
-        let isPast = false;
-        if (isToday) {
+        const slotKey = `r${row + 1}-c${col + 1}-s${slot}`; //gives them all a unique key
+        let isPast = false; //default
+        if (isToday) { //date selected 
           const hour = 7 + Math.floor(slot / 2);
           const min = slot % 2 === 0 ? 0 : 30;
           isPast = now.getHours() > hour || (now.getHours() === hour && now.getMinutes() >= min);
         }
+
+        //Command that makes sure unavailable seats cannot be booked anymore(frontend and backend)
         const unavailable = (listMatch != filteredReservationList.length) &&
           (slot >= timeToIndex(filteredReservationList[listMatch].reservation.time_start) &&
            slot < timeToIndex(filteredReservationList[listMatch].reservation.time_end));
@@ -490,15 +525,15 @@ function renderSeats() {
         : selected.has(slotKey)
         ? "reserved"
         : "available";
-        td.onclick = () => {
+        td.onclick = () => { //Wehn a user clicks on a slot(usually when it becomes dark green)
           if (disabled || unavailable) return;
-          if (!seatSelections[key]) seatSelections[key] = new Set();
-          if (seatSelections[key].has(slotKey)) {
+          if (!seatSelections[key]) seatSelections[key] = new Set(); 
+          if (seatSelections[key].has(slotKey)) { //just making sure each seat is assoicated with a key
             seatSelections[key].delete(slotKey);
           } else {
             seatSelections[key].add(slotKey);
           }
-          fetchReservationList().then(renderSeats);
+          fetchReservationList().then(renderSeats); //updates constantly after every reservation so view is accurate
         };
         tr.appendChild(td);
       }
@@ -507,26 +542,28 @@ function renderSeats() {
   }
   table.appendChild(tbody);
 }
-// ----------------------------------------------------------
 
-function updateReserveButton() {
+//Helper
+function updateReserveButton() 
+{
   document.getElementById("reserveBtn").disabled = !(selectedRoom && selectedDate);
 }
 
-// Reserve button click handler (support technician reservation for students)
+// Reserve button click handler for both student and technician
 document.getElementById("reserveBtn").onclick = async () => {
   try {
     const key = getKey();
-    const slotSet = seatSelections[key];
+    const slotSet = seatSelections[key]; //gets slot key
     const { role, username, labNumber } = getURLParams();
     let actualUsername = username;
     let actualUserId = null;
-    if (role === "technician") {
+    if (role === "technician") { //Makes sure a technician has a student to reserve for 
       if (!technicianSelectedStudent) {
         alert("Technician: You must select a student to reserve for.");
         return;
       }
-      actualUsername = technicianSelectedStudent.username;
+      //gets the student object
+      actualUsername = technicianSelectedStudent.username; 
       actualUserId = technicianSelectedStudent._id;
       let verifyRes = await fetch(`/api/users/${actualUserId}`);
       if (!verifyRes.ok) {
@@ -570,6 +607,8 @@ document.getElementById("reserveBtn").onclick = async () => {
         return;
       }
     }
+
+    //Gets the data of all the slots including which seat it is and the time start and end 
     const allSlots = slotData.map(s => s.slot);
     const globalStartSlot = Math.min(...allSlots);
     const globalEndSlot = Math.max(...allSlots) + 1;
@@ -594,6 +633,8 @@ document.getElementById("reserveBtn").onclick = async () => {
       alert("Time conversion function not available");
       return;
     }
+
+    // Once reserved sends a post request to add the reservation
     const request = {
       time_start: slotToTime(globalStartSlot),
       time_end: slotToTime(globalEndSlot),
@@ -609,8 +650,9 @@ document.getElementById("reserveBtn").onclick = async () => {
     const reserveBtn = document.getElementById("reserveBtn");
     const originalText = reserveBtn.textContent;
     reserveBtn.disabled = true;
-    reserveBtn.textContent = "Processing...";
+    reserveBtn.textContent = "Reserve Slot";
     let response = null;
+    //If the reservation already exists(and user wants to edit it)
     if (getReservationID()) {
       response = await fetch("/api/reservations/" + getReservationID(), {
         method: "PUT",
@@ -618,6 +660,7 @@ document.getElementById("reserveBtn").onclick = async () => {
         body: JSON.stringify(request)
       });
     }
+    //adds a new reservation
     else {
       response = await fetch("/api/reservations", {
         method: "POST",
@@ -642,13 +685,13 @@ document.getElementById("reserveBtn").onclick = async () => {
       throw new Error(errorMessage);
     }
     const data = await response.json();
-    alert("Reservation successful!");
+    alert("Reservation successful!"); //sucessful reservation
     seatSelections[key] = new Set();
-    // --- Fix: Always await fetchReservationList then renderSeats ---
     if (typeof renderSeats === 'function') {
       await fetchReservationList();
       renderSeats();
     }
+    //redirects them back to either profile for student or reservation list for admin
     if (role === 'student') {
       window.location.href = `/dashboard/student/profile?username=${encodeURIComponent(actualUsername)}`;
     } else {
@@ -656,7 +699,7 @@ document.getElementById("reserveBtn").onclick = async () => {
     }
   } catch (error) {
     console.error("Full error object:", error);
-    alert(`Failed to reserve slots: ${error.message}`);
+    alert(`Failed to reserve slots: ${error.message}`); //error message
     logError(error, 'Reserve button onclick (dashboard.js)');
   } finally {
     const reserveBtn = document.getElementById("reserveBtn");
@@ -672,7 +715,7 @@ document.getElementById("reserveBtn").onclick = async () => {
   }
 };
 
-// --- Utility: Render dates as Manila time for display ---
+//Helper function 
 function toManilaTime(date) {
   if (!date) return '';
   const d = new Date(date);
@@ -680,7 +723,7 @@ function toManilaTime(date) {
   return d;
 }
 
-// Event Listeners
+// Event Listener
 document.addEventListener('DOMContentLoaded', async function() {
   // Main search bar
   const searchInput = document.getElementById('user-search-input');
@@ -690,7 +733,7 @@ document.addEventListener('DOMContentLoaded', async function() {
     });
     searchInput.addEventListener('keydown', searchDropdownKeyHandler);
   }
-  // Technician: student search input
+  // Technician student search
   const techStudentSearchInput = document.getElementById('technician-student-search');
   if (techStudentSearchInput) {
     techStudentSearchInput.addEventListener('input', function(e) {
@@ -722,7 +765,7 @@ document.addEventListener('DOMContentLoaded', async function() {
   if (typeof setupTechnicianStudentUI === "function") setupTechnicianStudentUI();
 });
 
-// Make functions global
+// Global functions
 window.searchUsers = searchUsers;
 window.viewUserProfile = viewUserProfile;
 window.technicianStudentSearch = technicianStudentSearch;

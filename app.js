@@ -1,6 +1,8 @@
-if(process.env.NODE_ENV !== 'production'){
+if(process.env.NODE_ENV !== 'production'){ //allows for session private key
   require('dotenv').config();
 }
+
+//Installed depencencies
 const express = require('express'); 
 const session = require('express-session');
 const exphbs = require('express-handlebars'); 
@@ -8,11 +10,12 @@ const path = require('path');
 const mongoose = require('mongoose');
 const app = express(); 
 const port = 3000;
-const connectDB = require('./model/db');
+const connectDB = require('./model/db'); //connect to db
 const bcrypt = require('bcrypt');
-const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech, checkAdmin } = require('./middleware');
+const { checkLoggedIn, bypassLogin, checkStudent, checkLabTech, checkAdmin } = require('./middleware'); //middleware functions
 app.use(express.urlencoded({ extended: true })); 
 app.use(express.json()); 
+//enable sessions and cookies
 app.use(session({
     secret: process.env.SESSION_SECRET,
     resave: false,
@@ -24,21 +27,21 @@ app.use(session({
 }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+//Models 
 const User = require('./model/user');
 const Lab = require('./model/lab');
 const Reservation = require('./model/reservation');
-const TechReservation = require('./model/tech_reservation');
 const SeatList = require('./model/seat_list');
-const TechSeatList = require('./model/tech_seat_list');
 const ErrorLog = require('./model/error_log');
 
+//handlebars
 const hbs = exphbs.create({
   extname: '.hbs',
-  layoutsDir: path.join(__dirname, 'views/layouts'),
-  partialsDir: path.join(__dirname, 'views/partials'),
+  layoutsDir: path.join(__dirname, 'views/layouts'), //layouts directory
+  partialsDir: path.join(__dirname, 'views/partials'), //partials directory
   helpers: {
     eq: (a, b) => a === b,
-    statusClass: function (status) {
+    statusClass: function (status) { //color of the status
       switch (status) {
         case 'Cancelled': return 'red';
         case 'Completed': return 'green';
@@ -47,7 +50,7 @@ const hbs = exphbs.create({
         default: return '';
       }
     },
-    formatManilaDate(dateStr) {
+    formatManilaDate(dateStr) { //so that time is correct 
       if (!dateStr) return "";
       let date;
       if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
@@ -57,17 +60,19 @@ const hbs = exphbs.create({
       }
 
 
-      date.setDate(date.getDate() + 1);
+      date.setDate(date.getDate() + 1); //bug fix
 
-      return date.getFullYear()
+      return date.getFullYear() //get year
         + "-" + String(date.getMonth() + 1).padStart(2, '0')
         + "-" + String(date.getDate()).padStart(2, '0');
     },
   }
 });
-app.engine('hbs', hbs.engine);
+
+app.engine('hbs', hbs.engine); //enables hbs files
 app.set('view engine', 'hbs');
 
+//error logging
 async function logError(error, source, user) {
   try {
     const log = new ErrorLog({
@@ -99,38 +104,49 @@ app.get('/login', bypassLogin, (req, res) => {
   });
 });
 
+//post route for login
 app.post('/login', async (req, res) => {
-  const { email, password, remember } = req.body;
+  const { email, password, remember } = req.body; //gets input data 
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }); //tries to find an existing email
 
-    if (!user || !(await bcrypt.compare(password, user.password))) {
+    if (!user) { //Email dosent exist
       return res.status(401).render('handlebars/login', {
         layout: 'login-signupLayout',
         title: 'Login',
         page: 'login',
-        loginError: 'Invalid email or password.'
+        loginError: 'Invalid email'
+      });
+    }
+    //If hashed passwords arent the same
+    if (!(await bcrypt.compare(password, user.password))) {
+      return res.status(401).render('handlebars/login', {
+        layout: 'login-signupLayout',
+        title: 'Login',
+        page: 'login',
+        loginError: 'Invalid password.'
       });
     }
 
     const role = user.role;
     const username = user.username;
+    //saves session data assuming user wants to remember me 
     req.session.user = {
       id: user._id,
       username: user.username,
       role: user.role,
       remember: remember === 'on'
     };
-
+    //if user selects remember me generate a cookie 
     if (req.session.user.remember) {
-      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30;
+      req.session.cookie.maxAge = 1000 * 60 * 60 * 24 * 30; //cookie lifespan
     } else {
       req.session.cookie.expires = false;
     }
 
     let redirectURL;
-
+    //redirects them to the correct page 
     if (role === 'Admin') {
       redirectURL = `/admin`;
     } else if (role === 'Lab Technician') {
@@ -164,7 +180,8 @@ app.get('/admin', checkAdmin, (req, res) => {
   });
 });
 
-// View all lab technicians (shows and clears success message if present)
+//Admin Routes
+// View all lab technicians
 app.get('/admin/view-labtech', checkAdmin, async (req, res) => {
   const techs = await User.find({ role: 'Lab Technician' }).lean();
   res.render('handlebars/admin', {
@@ -176,7 +193,7 @@ app.get('/admin/view-labtech', checkAdmin, async (req, res) => {
   });
 });
 
-// Add lab technician (form)
+//Add a lab technician(view)
 app.get('/admin/add-labtech', checkAdmin, (req, res) => {
   res.render('handlebars/admin', {
     title: 'Add Lab Technician',
@@ -186,10 +203,10 @@ app.get('/admin/add-labtech', checkAdmin, (req, res) => {
   });
 });
 
-// Add lab technician (handler)
+//Add lab technician(post)
 app.post('/admin/add-labtech', checkAdmin, async (req, res) => {
-  const { username, email, password } = req.body;
-  const existingUser = await User.findOne({ username });
+  const { username, email, password } = req.body; //input fields 
+  const existingUser = await User.findOne({ username }); //finds if user already exists
   if (existingUser) {
     return res.render('handlebars/admin', {
       title: 'Add Lab Technician',
@@ -199,13 +216,14 @@ app.post('/admin/add-labtech', checkAdmin, async (req, res) => {
       adminName: req.session.user.username
     });
   }
+  //hashed passwords 
   const hashedPassword = await bcrypt.hash(password, 10);
-  await new User({ username, email, password: hashedPassword, role: 'Lab Technician' }).save();
+  await new User({ username, email, password: hashedPassword, role: 'Lab Technician' }).save(); //saves to db
   req.session.successMessage = 'Lab Technician added successfully!';
-  res.redirect('/admin/view-labtech');
+  res.redirect('/admin/view-labtech'); //shows the added user
 });
 
-// Remove lab technician (form)
+//Remove lab technician (view)
 app.get('/admin/remove-labtech', checkAdmin, (req, res) => {
   res.render('handlebars/admin', {
     title: 'Remove Lab Technician',
@@ -215,11 +233,11 @@ app.get('/admin/remove-labtech', checkAdmin, (req, res) => {
   });
 });
 
-// Remove lab technician (handler)
+// Remove lab technician (post)
 app.post('/admin/remove-labtech', checkAdmin, async (req, res) => {
   const { username } = req.body;
-  const deleted = await User.deleteOne({ username, role: 'Lab Technician' });
-  if (deleted.deletedCount === 0) {
+  const deleted = await User.deleteOne({ username, role: 'Lab Technician' }); //checks if the user exists 
+  if (deleted.deletedCount === 0) { //no lab technician found 
     return res.render('handlebars/admin', {
       title: 'Remove Lab Technician',
       layout: 'adminLayout',
@@ -232,10 +250,10 @@ app.post('/admin/remove-labtech', checkAdmin, async (req, res) => {
   res.redirect('/admin/view-labtech');
 });
 
-
+//logout route 
 app.get('/logout', (req, res) => {
   try {
-    if(!req.session.user.remember) {
+    if(!req.session.user.remember) { // If user logouts 
       req.session.destroy(err =>{
         if (err){
           console.error('Session destruction error:', err);
@@ -261,11 +279,11 @@ app.get('/register', (req, res) => {
     page: 'register'
   });
 });
-
+//post route for register
 app.post('/register', async (req, res) => {
-  const { username, email, password, confirmPassword } = req.body;
+  const { username, email, password, confirmPassword } = req.body; //user input
 
-  if (password !== confirmPassword) {
+  if (password !== confirmPassword) { // If password inputs dont match
     return res.render('handlebars/register', {
       layout: 'login-signupLayout',
       title: 'Register',
@@ -275,7 +293,7 @@ app.post('/register', async (req, res) => {
   }
 
   try {
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email }); //Checks if user with that email exists 
     if (existingUser) {
       return res.render('handlebars/register', {
         layout: 'login-signupLayout',
@@ -285,7 +303,7 @@ app.post('/register', async (req, res) => {
       });
     }
 
-    const existingUsername = await User.findOne({ username });
+    const existingUsername = await User.findOne({ username }); //Checks if the username already exists 
     if (existingUsername) {
       return res.render('handlebars/register', {
         layout: 'login-signupLayout',
@@ -295,7 +313,7 @@ app.post('/register', async (req, res) => {
       });
     }
 
-    if (password.length < 8) {
+    if (password.length < 8) { //password must be 8 characters long 
       return res.render('handlebars/register', {
         layout: 'login-signupLayout',
         title: 'Register',
@@ -304,9 +322,9 @@ app.post('/register', async (req, res) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10); //hashes password
 
-    const newUser = new User({
+    const newUser = new User({ //saves user to db
       username,
       email,
       password: hashedPassword,
@@ -318,7 +336,7 @@ app.post('/register', async (req, res) => {
 
     await newUser.save();
 
-    const redirectURL = `/dashboard/student?username=${encodeURIComponent(username)}`;
+    const redirectURL = `/dashboard/student?username=${encodeURIComponent(username)}`; //redirects user to dashboard(always student)
     res.redirect(redirectURL);
 
   } catch (err) {
@@ -333,7 +351,7 @@ app.post('/register', async (req, res) => {
 });
 
 
-//route for dashboard student
+//route for student dashboard
 app.get('/dashboard/student', checkStudent, (req, res) => {
   const username = req.query.username || 'Student';
   const role = req.query.role || 'Student';
@@ -347,7 +365,7 @@ app.get('/dashboard/student', checkStudent, (req, res) => {
   });
 });
 
-//route for dashboard technician
+//route for technician dashboard
 app.get('/dashboard/technician',checkLabTech, (req, res) => {
   const username = req.query.username || 'Lab Technician';
   const role = req.query.role || 'Lab Technician';
@@ -361,7 +379,7 @@ app.get('/dashboard/technician',checkLabTech, (req, res) => {
   });
 });
 
-// Route for reservation editing
+// Route for editing reservations
 app.get('/dashboard/technician/edit/:id', checkLabTech, (req, res) => {
   const id = req.query.id;
 
@@ -375,6 +393,7 @@ app.get('/dashboard/technician/edit/:id', checkLabTech, (req, res) => {
   });
 });
 
+//route for getting lab numbers 
 app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
   const { role, labNumber } = req.params;
   const username = req.query.username || 'Guest';
@@ -389,7 +408,7 @@ app.get('/dashboard/:role/lab/:labNumber', (req, res) => {
   });
 });
 
-//route for tech help
+//route for technician help
 app.get('/dashboard/technician/help',checkLabTech, (req, res) => {
   const { username } = req.query;
 
@@ -413,7 +432,7 @@ app.get('/dashboard/student/help',checkStudent, (req, res) => {
   });
 });
 
-//route for tech profile
+//route for technician profile 
 app.get(['/dashboard/technician/profile', '/dashboard/Lab%20Technician/profile'], checkLabTech,async (req, res) => {
   const username = req.query.username;
 
@@ -455,47 +474,46 @@ app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
       return start - now <= 10 * 60 * 1000;
     };
 
+    // fixes time to be the same as current Manila time 
     function parseLocalDateTime(dateInput, timeStr) {
-      const [year, month, day] = new Date(dateInput).toISOString().split('T')[0].split('-').map(Number);
+      const date = new Date(dateInput); //gets current date 
 
-      const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i);
-      if (!match) return new Date();
+      const match = timeStr.match(/(\d+)(?::(\d+))?\s*(AM|PM)/i); //human readable 
+      if (!match) return date;
 
       let hour = parseInt(match[1], 10);
       const minute = match[2] ? parseInt(match[2], 10) : 0;
       const ampm = match[3].toUpperCase();
 
-      if (ampm === 'PM' && hour !== 12) hour += 12;
+      //AM PM handlers 
+      if (ampm === 'PM' && hour !== 12) hour += 12; 
       if (ampm === 'AM' && hour === 12) hour = 0;
 
-      return new Date(year, month - 1, day, hour, minute, 0, 0);
+      date.setHours(hour, minute, 0, 0);
+      return date;
     }
 
+    //Get current status of reservations 
     function getStatus(resv) {
-      if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
+      if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled'; //by default 
 
+      //gets the start and end time of the reservation as well as what the current time is 
       const start = parseLocalDateTime(resv.date, resv.time_start);
       const end = parseLocalDateTime(resv.date, resv.time_end);
       const now = new Date();
 
-      if (resv.status === 'Cancelled') return 'Cancelled';
-      if (now < start) return 'Scheduled';
-      if (now >= start && now <= end) return 'In Progress';
-      return 'Completed';
+      if (resv.status === 'Cancelled') return 'Cancelled'; //if its cancelled 
+      if (now < start) return 'Scheduled'; //if the reservation is in the future 
+      if (now >= start && now <= end) return 'In Progress'; //if the reservation is the present 
+      return 'Completed'; //if the reservation is in the past 
     }
 
-    const [studentSeats, techSeats] = await Promise.all([
+    // Generates all the users reservation
+    const [studentSeats] = await Promise.all([
       SeatList.find().populate({
         path: 'reservation',
         populate: [
           { path: 'user', select: 'username' },
-          { path: 'lab', select: 'class number' }
-        ]
-      }).lean(),
-      TechSeatList.find().populate({
-        path: 'reservation',
-        populate: [
-          { path: 'student', select: 'username' },
           { path: 'lab', select: 'class number' }
         ]
       }).lean()
@@ -503,6 +521,7 @@ app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
 
     const allReservations = [];
 
+    //Pushes all the relevant data on the students reservation list 
     for (const seat of studentSeats) {
       const r = seat.reservation;
       if (!r || !r.user || r.user.username !== username) continue;
@@ -514,25 +533,7 @@ app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
         lab: `Lab ${r.lab.number} (${r.lab.class})`,
         time_start: r.time_start,
         time_end: r.time_end,
-        date: r.date.toISOString().split('T')[0],
-        createdAt: r.createdAt.toLocaleString(),
-        status: getStatus(r),
-        showDelete: getShowDelete(r)
-      });
-    }
-
-    for (const seat of techSeats) {
-      const r = seat.reservation;
-      if (!r || !r.student || r.student.username !== username) continue;
-
-      allReservations.push({
-        _id: r._id && r._id.toString ? r._id.toString() : r._id,
-        row: seat.row,
-        column: seat.column,
-        lab: `Lab ${r.lab.number} (${r.lab.class})`,
-        time_start: r.time_start,
-        time_end: r.time_end,
-        date: r.date.toISOString().split('T')[0],
+        date: r.date.toISOString().split('T')[0], 
         createdAt: r.createdAt.toLocaleString(),
         status: getStatus(r),
         showDelete: getShowDelete(r)
@@ -540,8 +541,8 @@ app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
     }
 
     allReservations.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    const pastReservations = allReservations.filter(r => ['Completed', 'Cancelled'].includes(r.status));
-    const upcomingReservations = allReservations.filter(r => !['Completed', 'Cancelled'].includes(r.status));
+    const pastReservations = allReservations.filter(r => ['Completed', 'Cancelled'].includes(r.status)); //Shows all past reservations
+    const upcomingReservations = allReservations.filter(r => !['Completed', 'Cancelled'].includes(r.status)); //Shows all future reservations 
 
     res.render('handlebars/profile', {
       title: 'Student Profile',
@@ -557,7 +558,7 @@ app.get('/dashboard/student/profile', checkStudent, async (req, res) => {
     res.status(500).send('Server error');
   }
 });
-
+//Shows reservation list of all students(for technician)
 app.get('/dashboard/technician/reservation-list',checkLabTech, async (req, res) => {
   const { username } = req.query;
 
@@ -576,19 +577,13 @@ app.get('/dashboard/technician/reservation-list',checkLabTech, async (req, res) 
       return start - now <= 10 * 60 * 1000;
     };
 
-    const [studentSeats, techSeats] = await Promise.all([
+  
+    const [studentSeats] = await Promise.all([
       SeatList.find().populate({
         path: 'reservation',
         populate: [
           { path: 'user', select: 'username' },
           { path: 'lab', select: 'class number' }
-        ]
-      }).lean(),
-      TechSeatList.find().populate({
-        path: 'reservation',
-        populate: [
-          { path: 'student', select: 'username' },
-          { path: 'lab', select: 'class number' },
         ]
       }).lean()
     ]);
@@ -610,6 +605,7 @@ app.get('/dashboard/technician/reservation-list',checkLabTech, async (req, res) 
       return date;
     }
 
+    //Gets the current status of reservation(same as the student view)
     function getStatus(resv) {
       if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
 
@@ -650,30 +646,6 @@ app.get('/dashboard/technician/reservation-list',checkLabTech, async (req, res) 
       });
     }
 
-    for (const seat of techSeats) {
-      const r = seat.reservation;
-      if (!r || !r.student || !r.lab) continue;
-
-      const status = getStatus(r);
-      const isPast = status === 'Completed' || status === 'Cancelled';
-
-      combined.push({
-        _id: r._id && r._id.toString ? r._id.toString() : r._id,
-        row: seat.row,
-        column: seat.column,
-        student: r.student.username,
-        lab: `Lab ${r.lab.number} (${r.lab.class})`,
-        time_start: r.time_start,
-        time_end: r.time_end,
-        date: r.date.toISOString().split('T')[0],
-        createdAt: r.createdAt.toLocaleString(),
-        status,
-        showDelete: getShowDelete(r),
-        type: 'technician',
-        isPast
-      });
-    }
-
     combined.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
 
     res.render('handlebars/reservation', {
@@ -690,7 +662,7 @@ app.get('/dashboard/technician/reservation-list',checkLabTech, async (req, res) 
   }
 });
 
-// route for viewprofile
+//view user profile 
 app.get('/dashboard/view-profile/:username', async (req, res) => {
   const { username } = req.params;
   const currentUsername = req.query.username;
@@ -706,15 +678,16 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
       return res.status(404).send('User not found');
     }
 
-    if (currentUser.username === viewedUser.username) {
+    if (currentUser.username === viewedUser.username) { 
       return res.redirect(`/dashboard/${currentUser.role.toLowerCase()}/profile?username=${encodeURIComponent(currentUsername)}`);
     }
 
     let upcomingReservations = [];
     let pastReservations = [];
     
-    if (currentUser.role === 'Lab Technician' && viewedUser.role === 'Student') {
-      const getStatus = (resv) => {
+    if (currentUser.role === 'Lab Technician' && viewedUser.role === 'Student') 
+      {
+      /* const getStatus = (resv) => {
         if (!resv || !resv.time_start || !resv.date) return 'Unknown';
         const [sh, sm] = resv.time_start.split(':').map(Number);
         const [eh, em] = resv.time_end.split(':').map(Number);
@@ -728,20 +701,26 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
         if (now < start) return 'Scheduled';
         if (now >= start && now <= end) return 'In Progress';
         return 'Completed';
-      };
+      };*/ 
+    //same as the getStatus previously
+     function getStatus(resv) {
+     if (!resv || !resv.date || !resv.time_start || !resv.time_end) return 'Scheduled';
+
+      const start = parseLocalDateTime(resv.date, resv.time_start);
+      const end = parseLocalDateTime(resv.date, resv.time_end);
+      const now = new Date();
+
+      if (resv.status === 'Cancelled') return 'Cancelled';
+      if (now < start) return 'Scheduled';
+      if (now >= start && now <= end) return 'In Progress';
+      return 'Completed';
+    }
 
       const [studentSeats, techSeats] = await Promise.all([
         SeatList.find().populate({
           path: 'reservation',
           populate: [
             { path: 'user', select: 'username' },
-            { path: 'lab', select: 'class number' }
-          ]
-        }).lean(),
-        TechSeatList.find().populate({
-          path: 'reservation',
-          populate: [
-            { path: 'student', select: 'username' },
             { path: 'lab', select: 'class number' }
           ]
         }).lean()
@@ -763,22 +742,6 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
           date: r.date.toISOString().split('T')[0],
           status: getStatus(r),
           type: 'student'
-        });
-      }
-      for (const seat of techSeats) {
-        const r = seat.reservation;
-        if (!r || !r.student || r.student.username !== viewedUser.username) continue;
-
-        allReservations.push({
-          _id: r._id && r._id.toString ? r._id.toString() : r._id,
-          row: seat.row,
-          column: seat.column,
-          lab: `Lab ${r.lab.number} (${r.lab.class})`,
-          time_start: r.time_start,
-          time_end: r.time_end,
-          date: r.date.toISOString().split('T')[0],
-          status: getStatus(r),
-          type: 'technician'
         });
       }
 
@@ -833,18 +796,18 @@ app.post('/api/log-error', async (req, res) => {
   }
 });
 
-// Delete users
+//Delete users
 app.delete('/api/users/:username', async (req, res) => {
   try {
     const { username } = req.params;
     const decodedUsername = decodeURIComponent(username);
 
-    const user = await User.findOne({ username: decodedUsername });
+    const user = await User.findOne({ username: decodedUsername }); //if User is not found 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
 
-    await User.deleteOne({ username: decodedUsername });
+    await User.deleteOne({ username: decodedUsername }); //Deletes the user from database along with all their records 
     res.json({ success: true, message: 'Account deleted successfully' });
   } catch (error) {
     console.error('Delete account error:', error);
@@ -858,19 +821,12 @@ app.delete('/api/reservation/:id', async (req, res) => {
     const { id } = req.params;
 
     
-    let reservation = await Reservation.findById(id);
-    if (reservation) {
-      await SeatList.deleteMany({ reservation: id });
-      await Reservation.deleteOne({ _id: id });
-      return res.json({ success: true, message: 'Reservation deleted successfully' });
-    }
-
-    
-    let techReservation = await TechReservation.findById(id);
-    if (techReservation) {
-      await TechSeatList.deleteMany({ reservation: id });
-      await TechReservation.deleteOne({ _id: id });
-      return res.json({ success: true, message: 'Reservation deleted successfully' });
+    let reservation = await Reservation.findById(id); //finds the id of the reservation(unique)
+    if (reservation) 
+      {
+      await SeatList.deleteMany({ reservation: id }); //allow user to delete a seat(assume that user can reserve more than 1 seat)
+      await Reservation.deleteOne({ _id: id }); //allows user to delete a reservation
+      return res.json({ success: true, message: 'Reservation deleted successfully' }); //deletes reservation 
     }
 
     return res.status(404).json({ error: 'Reservation not found' });
@@ -880,26 +836,26 @@ app.delete('/api/reservation/:id', async (req, res) => {
   }
 });
 
-// Change password
+//Change password
 app.post('/api/users/:username/change-password', async (req, res) => {
   try {
     const { username } = req.params;
     const decodedUsername = decodeURIComponent(username);
-    const { currentPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body; //gets the current and new password 
 
     const user = await User.findOne({ username: decodedUsername });
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
     }
-    const passwordMatch = await bcrypt.compare(currentPassword, user.password);
+    const passwordMatch = await bcrypt.compare(currentPassword, user.password); //checks if passwords match 
     if (!passwordMatch) {
       return res.status(401).json({ error: 'Current password is incorrect' });
     }
 
-    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10); //hashes new password 
     user.password = hashedNewPassword;
 
-    await user.save();
+    await user.save(); //saves changes
 
     res.json({ success: true, message: 'Password updated successfully' });
   } catch (error) {
@@ -908,7 +864,7 @@ app.post('/api/users/:username/change-password', async (req, res) => {
   }
 });
 
-// update the profile update endpoint
+//Update user information 
 app.put('/api/users/:username', async (req, res) => {
   try {
     const { username } = req.params;
@@ -932,13 +888,13 @@ app.put('/api/users/:username', async (req, res) => {
   }
 });
 
-//search api
+//search for users 
 app.get('/api/users/search/:query', async (req, res) => {
   try {
     const { query } = req.params;
     const decodedQuery = decodeURIComponent(query);
     
-    const users = await User.find({
+    const users = await User.find({ //Finds if a user exists 
       $or: [
         { username: { $regex: decodedQuery, $options: 'i' } },
         { email: { $regex: decodedQuery, $options: 'i' } }
@@ -952,7 +908,7 @@ app.get('/api/users/search/:query', async (req, res) => {
   }
 });
 
-// labs API
+//Lab API
 app.get('/api/labs', async (req, res) => {
   try {
     const labs = await Lab.find();
@@ -961,7 +917,7 @@ app.get('/api/labs', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+//get lab by id 
 app.get('/api/labs/:id', async (req, res) => {
   try {
     const lab = await Lab.findById(req.params.id);
@@ -973,7 +929,7 @@ app.get('/api/labs/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+//create new lab
 app.post('/api/labs', async (req, res) => {
   try {
     const lab = new Lab(req.body);
@@ -984,7 +940,7 @@ app.post('/api/labs', async (req, res) => {
   }
 });
 
-// users API
+//get all users 
 app.get('/api/users', async (req, res) => {
   try {
     const users = await User.find().select('-password');
@@ -993,7 +949,7 @@ app.get('/api/users', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+//get user by id 
 app.get('/api/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id).select('-password');
@@ -1005,7 +961,7 @@ app.get('/api/users/:id', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+//create a new user 
 app.post('/api/users', async (req, res) => {
   try {
     const user = new User(req.body);
@@ -1018,10 +974,10 @@ app.post('/api/users', async (req, res) => {
   }
 });
 
-// student Reservations API
+//get all reservations 
 app.get('/api/reservations', async (req, res) => {
   try {
-    const reservations = await Reservation.find()
+    const reservations = await Reservation.find() //get information from each reservation
       .populate('user', 'firstName lastName email')
       .populate('lab', 'class number');
     res.json(reservations);
@@ -1029,10 +985,10 @@ app.get('/api/reservations', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+//create a new reservation 
 app.post('/api/reservations', async (req, res) => {
   try {
-    const {
+    const { //data to be added 
       time_start,
       time_end,
       user: username,
@@ -1042,12 +998,12 @@ app.post('/api/reservations', async (req, res) => {
       seats
     } = req.body;
 
-    if (!time_start || !time_end || !username || !labNumber || !date) {
+    if (!time_start || !time_end || !username || !labNumber || !date) { //incomplete data 
       return res.status(400).json({ 
         error: "Missing required fields: time_start, time_end, user, lab, date" 
       });
     }
-
+    //no seats are selected 
     if (!Array.isArray(seats) || seats.length === 0) {
       return res.status(400).json({ 
         error: "At least one seat must be selected" 
@@ -1073,57 +1029,40 @@ app.post('/api/reservations', async (req, res) => {
       
       reservationDate = new Date(date);
     }
-
-    // --- OVERLAP FIX ---
-    const overlappingStudentReservations = await Reservation.find({
-      lab: foundLab._id,
+    //Checks for if a student had previously reserved a slot at that time 
+    const overlappingStudentReservations = await Reservation.find({ //checks for the lab and date 
+      lab: foundLab._id, 
       date: reservationDate,
       $or: [
         {
-          $and: [
-            { time_start: { $lt: time_end } },
+          $and: [ //Checks the start and endtime of the reservation
+            { time_start: { $lt: time_end } }, 
             { time_end: { $gt: time_start } }
           ]
         }
       ]
     });
 
-    const overlappingTechReservations = await TechReservation.find({
-      lab: foundLab._id,
-      date: reservationDate,
-      $or: [
-        {
-          $and: [
-            { time_start: { $lt: time_end } },
-            { time_end: { $gt: time_start } }
-          ]
-        }
-      ]
-    });
-
-    // Collect all seats for those reservations
-    const [studentSeats, techSeats] = await Promise.all([
+    // Get the seats 
+    const [studentSeats] = await Promise.all([
       SeatList.find({
-        reservation: { $in: overlappingStudentReservations.map(r => r._id) }
-      }),
-      TechSeatList.find({
-        reservation: { $in: overlappingTechReservations.map(r => r._id) }
+        reservation: { $in: overlappingStudentReservations.map(r => r._id) } //maps out all overlapping reservations 
       })
     ]);
-    const allOccupiedSeatPositions = [
-      ...studentSeats.map(seat => `${seat.row}-${seat.column}`),
-      ...techSeats.map(seat => `${seat.row}-${seat.column}`)
+    const allOccupiedSeatPositions = [ //Get all of the seats that have previous reservations 
+      ...studentSeats.map(seat => `${seat.row}-${seat.column}`) //Maps out all occupied seat positions(marked in red)
     ];
 
-    const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`);
-    const hasConflict = requestedSeatPositions.some(pos => allOccupiedSeatPositions.includes(pos));
+    const requestedSeatPositions = seats.map(seat => `${seat.row}-${seat.column}`); //What seat the user wants to reserve
+    const hasConflict = requestedSeatPositions.some(pos => allOccupiedSeatPositions.includes(pos)); //Compares the requested seat position with the list of all occupied seats 
 
-    if (hasConflict) {
+    if (hasConflict) { //If something interferes 
       return res.status(409).json({ 
-        error: "One or more selected seats are already reserved for this time slot" 
+        error: "One or more selected seats are already reserved for this time slot" //error message 
       });
     }
 
+    //If reservation is sucessful add it to the database 
     const reservation = new Reservation({
       time_start,
       time_end,
@@ -1131,20 +1070,20 @@ app.post('/api/reservations', async (req, res) => {
       lab: foundLab._id,
       date: reservationDate,
       anonymity: anonymity || false,
-      status: 'Scheduled'
+      status: 'Scheduled' //scheduled by default 
     });
 
-    await reservation.save();
+    await reservation.save(); //saves reservation to db
 
-    const seatDocs = seats.map(seat => ({
+    const seatDocs = seats.map(seat => ({ //Maps the reservation to a seat
       reservation: reservation._id,
       row: parseInt(seat.row),
       column: parseInt(seat.column)
     }));
 
-    await SeatList.insertMany(seatDocs);
+    await SeatList.insertMany(seatDocs); 
 
-    res.status(201).json({
+    res.status(201).json({ //sucessully saved(reservation created)
       success: true,
       message: "Reservation created successfully",
       reservationId: reservation._id,
@@ -1162,13 +1101,13 @@ app.post('/api/reservations', async (req, res) => {
   } catch (error) {
     console.error("Reservation Error:", error);
 
-    if (error.code === 11000) {
+    if (error.code === 11000) { //error (just in case )
       return res.status(409).json({ 
         error: "Duplicate reservation detected" 
       });
     }
 
-    if (error.name === 'ValidationError') {
+    if (error.name === 'ValidationError') { 
       return res.status(400).json({ 
         error: "Validation error: " + Object.values(error.errors).map(e => e.message).join(', ')
       });
@@ -1180,6 +1119,7 @@ app.post('/api/reservations', async (req, res) => {
   }
 });
 
+//Checks availability of lab
 app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
   try {
     const { date, time_start, time_end } = req.query;
@@ -1210,18 +1150,6 @@ app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
             ]
           }
         ]
-      }),
-      TechReservation.find({
-        lab: lab._id,
-        date: reservationDate,
-        $or: [
-          {
-            $and: [
-              { time_start: { $lt: time_end } },
-              { time_end: { $gt: time_start } }
-            ]
-          }
-        ]
       })
     ]);
 
@@ -1234,13 +1162,6 @@ app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
       occupiedSeats.push(...studentSeats.map(seat => ({ row: seat.row, column: seat.column })));
     }
     
-    if (techReservations.length > 0) {
-      const techSeats = await TechSeatList.find({
-        reservation: { $in: techReservations.map(r => r._id) }
-      });
-      occupiedSeats.push(...techSeats.map(seat => ({ row: seat.row, column: seat.column })));
-    }
-
     const totalSeats = [];
     for (let row = 1; row <= 7; row++) {
       for (let col = 1; col <= 5; col++) {
@@ -1268,30 +1189,27 @@ app.get('/api/labs/:labNumber/check-availability', async (req, res) => {
     res.status(500).json({ error: "Failed to check seat availability" });
   }
 });
-
+//Checks each reservation
 app.get('/api/reservations/:id', async (req, res) => {
   try {
 
     let reservation = await Reservation.findById(req.params.id)
       .populate('user', 'username email')
       .populate('lab', 'class number');
-    if (!reservation) {
-      reservation = await TechReservation.findById(req.params.id)
-        .populate('student', 'username email')
-        .populate('lab', 'class number');
-      if (!reservation) {
+  
+      if (!reservation) 
+      {
         return res.status(404).json({ error: 'Reservation not found' });
       }
-    }
     res.json(reservation);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
+//Edits reservation 
 app.put('/api/reservations/:id', async (req, res) => {
   try {
-    // Validate time format and duration
+    
     const timeRegex = /^(1[0-2]|0?[1-9]):(00|30) (AM|PM)$/i;
 
     // Convert to 24-hour for duration check
@@ -1303,7 +1221,7 @@ app.put('/api/reservations/:id', async (req, res) => {
       return hours;
     }
 
-    const startHour = to24Hour(req.body.time_start);
+    const startHour = to24Hour(req.body.time_start); 
     const endHour = to24Hour(req.body.time_end);
 
     if (endHour <= startHour) {
@@ -1315,14 +1233,14 @@ app.put('/api/reservations/:id', async (req, res) => {
       req.body.date = new Date(req.body.date + "T00:00:00+08:00");
     }
 
-    // First update the reservation
+    // Updates the reservation details after edit 
     const reservation = await Reservation.findByIdAndUpdate(
       req.params.id,
       {
-        time_start: req.body.time_start,
-        time_end: req.body.time_end,
-        date: req.body.date,
-        lab: req.body.lab
+        time_start: req.body.time_start, //update time start
+        time_end: req.body.time_end, //update time end 
+        date: req.body.date, //update date 
+        lab: req.body.lab //update time 
       },
       { new: true }
     ).populate('user', 'username email')
@@ -1332,9 +1250,9 @@ app.put('/api/reservations/:id', async (req, res) => {
       throw new Error('Reservation not found');
     }
 
-    // Then update the seat if row/column changed
+    //Updates the reservation based on what fields were edited 
     if (req.body.row && req.body.column) {
-      await SeatList.updateOne(
+      await SeatList.updateOne( //update row and column
         { reservation: req.params.id },
         { 
           $set: { 
@@ -1351,43 +1269,7 @@ app.put('/api/reservations/:id', async (req, res) => {
   }
 });
 
-app.post('/api/tech-reservations', async (req, res) => {
-  const session = await mongoose.startSession();
-  
-  try {
-    await session.withTransaction(async () => {
-      const { time_start, time_end, technician, lab, date, student, seats } = req.body;
-      
-      const techReservation = new TechReservation({
-        time_start,
-        time_end,
-        technician,
-        lab,
-        date,
-        student
-      });
-      
-      await techReservation.save({ session });
-      
-      if (seats && seats.length > 0) {
-        const seatDocs = seats.map(seat => ({
-          reservation: techReservation._id,
-          row: seat.row,
-          column: seat.column
-        }));
-        
-        await TechSeatList.insertMany(seatDocs, { session });
-      }
-      
-      res.status(201).json(techReservation);
-    });
-  } catch (error) {
-    res.status(400).json({ error: error.message });
-  } finally {
-    await session.endSession();
-  }
-});
-
+//get seat lists 
 app.get('/api/seat-lists', async (req, res) => {
   try {
     const seatLists = await SeatList.find()
@@ -1403,7 +1285,7 @@ app.get('/api/seat-lists', async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
-
+//get reservations (reservation list)
 app.get('/api/seat-lists/reservation/:reservationId', async (req, res) => {
   try {
     const seats = await SeatList.find({ reservation: req.params.reservationId });
@@ -1413,45 +1295,12 @@ app.get('/api/seat-lists/reservation/:reservationId', async (req, res) => {
   }
 });
 
-app.get('/api/tech-seat-lists', async (req, res) => {
-  try {
-    const seatLists = await TechSeatList.find()
-      .populate({
-        path: 'reservation',
-        populate: [
-          { path: 'technician', select: 'firstName lastName email' },
-          { path: 'student', select: 'firstName lastName email' },
-          { path: 'lab', select: 'class number' }
-        ]
-      });
-    res.json(seatLists);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.get('/api/tech-seat-lists/reservation/:reservationId', async (req, res) => {
-  try {
-    const seats = await TechSeatList.find({ reservation: req.params.reservationId });
-    res.json(seats);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
+//Find available seats
 app.get('/api/labs/:labId/available-seats', async (req, res) => {
   try {
     const { date, time_start, time_end } = req.query;
     
     const reservations = await Reservation.find({
-      lab: req.params.labId,
-      date: new Date(date),
-      $or: [
-        { time_start: { $lt: time_end }, time_end: { $gt: time_start } }
-      ]
-    });
-    
-    const techReservations = await TechReservation.find({
       lab: req.params.labId,
       date: new Date(date),
       $or: [
@@ -1465,11 +1314,7 @@ app.get('/api/labs/:labId/available-seats', async (req, res) => {
       const seats = await SeatList.find({ reservation: reservation._id });
       occupiedSeats.push(...seats.map(seat => ({ row: seat.row, column: seat.column })));
     }
-    
-    for (const techReservation of techReservations) {
-      const seats = await TechSeatList.find({ reservation: techReservation._id });
-      occupiedSeats.push(...seats.map(seat => ({ row: seat.row, column: seat.column })));
-    }
+
     
     const totalSeats = [];
     for (let row = 1; row <= 7; row++) {
@@ -1490,7 +1335,7 @@ app.get('/api/labs/:labId/available-seats', async (req, res) => {
   }
 });
 
-// get user's reservations
+// get users  reservations
 app.get('/api/users/:userId/reservations', async (req, res) => {
   try {
     const reservations = await Reservation.find({ user: req.params.userId })
@@ -1503,7 +1348,7 @@ app.get('/api/users/:userId/reservations', async (req, res) => {
   }
 });
 
-// start server with database connection
+// start server with MongoDB conenction
 connectDB().then(() => {
   app.listen(port, () => {
     console.log(`Server is running on http://localhost:${port}`);
