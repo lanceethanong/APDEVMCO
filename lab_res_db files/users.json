@@ -1,123 +1,134 @@
 [
     {
         "_id": {
-            "$oid": "6860a12de85f16a79168b642"
+            "$oid": "688c1c5c69ed22c51f004fa8"
         },
-        "email": "nightshow@dlsu.edu.ph",
-        "description": "ID124",
-        "remember": false,
-        "password": "Hallelujah",
-        "picture": "picture.jpg",
-        "role": "Student",
-        "__v": 0,
-        "username": "Travis"
-    },
-    {
-        "_id": {
-            "$oid": "6860a2bb1d876edbb63e81f8"
-        },
-        "email": "blinker@dlsu.edu.ph",
-        "description": "ID124",
-        "remember": false,
-        "password": "LOTV1234",
-        "picture": "picture.jpg",
-        "role": "Student",
-        "__v": 0,
-        "username": "Ellen Ophelia"
-    },
-    {
-        "_id": {
-            "$oid": "6860a2bb1d876edbb63e81f9"
-        },
-        "email": "randy@dlsu.edu.ph",
-        "description": "ID122",
-        "remember": false,
-        "password": "7/11",
-        "picture": "picture.jpg",
-        "role": "Student",
-        "__v": 0,
-        "username": "RandyV"
-    },
-    {
-        "_id": {
-            "$oid": "6860a2bb1d876edbb63e81fa"
-        },
-        "email": "ramona@dlsu.edu.ph",
-        "description": "ID123",
-        "remember": false,
-        "password": "guerrero",
-        "picture": "picture.jpg",
-        "role": "Student",
-        "__v": 0,
-        "username": "RamonaTas"
-    },
-    {
-        "_id": {
-            "$oid": "6860a2bb1d876edbb63e81fb"
-        },
-        "email": "technpc1@dlsu.edu.ph",
-        "description": "I am the head lab technician at DLSU Manila",
-        "remember": false,
-        "password": "bnwdadbbwaidaw",
-        "picture": "picture.jpg",
-        "role": "Lab Technician",
-        "__v": 0,
-        "username": "GeorgeB",
-        "updatedAt": {
-            "$date": "2025-07-09T08:28:12.694Z"
-        }
-    },
-    {
-        "_id": {
-            "$oid": "686ca1853738dc8aea3ed9db"
-        },
-        "email": "hello123@dlsu.edu.ph",
-        "description": "Lab Technician of DLSU-Laguna",
-        "remember": true,
-        "password": "123456ch",
-        "picture": "picture.jpg",
-        "role": "Lab Technician",
-        "__v": 0,
-        "username": "Hello",
-        "updatedAt": {
-            "$date": "2025-07-10T14:00:24.043Z"
-        }
-    },
-    {
-        "_id": {
-            "$oid": "687221e3a696175bce9161ff"
-        },
-        "email": "aiwajdwa@dlsu.edu.ph",
-        "username": "jenson",
+        "email": "riane123@dlsu.edu.ph",
+        "username": "Riane",
         "description": "",
         "remember": false,
-        "password": "Hello!234",
+        "password": "$2b$10$eN4X915y.7quVYcOcw0VN.KS6zVJy59lPP88WMaJmY3XLeDHJ0F8q",
         "picture": "picture.jpg",
-        "role": "Student",
+        "role": "Admin",
         "createdAt": {
-            "$date": "2025-07-12T08:50:43.031Z"
+            "$date": "2025-08-01T01:46:04.676Z"
         },
         "updatedAt": {
-            "$date": "2025-07-12T08:50:43.031Z"
+            "$date": "2025-08-01T01:48:14.397Z"
         },
         "__v": 0
     },
     {
         "_id": {
-            "$oid": "6872220aa696175bce916205"
+            "$oid": "688c1e2969ed22c51f004fe1"
         },
-        "email": "lancewda@dlsu.edu.ph",
-        "username": "lance",
-        "description": "Hello",
+        "email": "lance123@dlsu.edu.ph",
+        "username": "lance123",
+        "description": "",
         "remember": false,
-        "password": "Hello!234",
+        "password": "$2b$10$IP9DhLj5YbHRJTvQM7tPu.ziusiZ0Dsu5D4vZf2H63Ileo5eK6tKu",
+        "picture": "picture.jpg",
+        "role": "Lab Technician",
+        "createdAt": {
+            "$date": "2025-08-01T01:53:45.803Z"
+        },
+        "updatedAt": {
+            "$date": "2025-08-01T01:53:45.803Z"
+        },
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "688c1ee069ed22c51f004ff5"
+        },
+        "email": "hello12345@dlsu.edu.ph",
+        "username": "Hello12345",
+        "description": "",
+        "remember": false,
+        "password": "$2b$10$Ns3cDs1aQRkzWL8f9Ikq4ew3N3uG2jXb0UKqyG3EBIfQ2w2rvIbTi",
         "picture": "picture.jpg",
         "role": "Student",
         "createdAt": {
-            "$date": "2025-07-12T08:51:22.63Z"
+            "$date": "2025-08-01T01:56:48.246Z"
         },
         "updatedAt": {
-            "$date": "2025-07-12T12:57:49.424Z"
+            "$date": "2025-08-01T01:57:55.976Z"
+        },
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "688f24515b054f0a8eb23875"
+        },
+        "email": "jenson555@dlsu.edu.ph",
+        "username": "Jenson543",
+        "description": "",
+        "remember": false,
+        "password": "$2b$10$M69u4vbrv7MaWEen6BTtt.Z2yv7a0D1AwaU2jNhKnsmYReIjLE8.G",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "createdAt": {
+            "$date": "2025-08-03T08:56:49.277Z"
+        },
+        "updatedAt": {
+            "$date": "2025-08-03T08:56:49.277Z"
+        },
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "688f26e15b054f0a8eb23881"
+        },
+        "email": "adam789@dlsu.edu.ph",
+        "username": "adam",
+        "description": "",
+        "remember": false,
+        "password": "$2b$10$Vm10u0LZlXRDLK/U/Y/YNe.bwbere48bmGxB/i4b3xMcqJ3JYwJgi",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "createdAt": {
+            "$date": "2025-08-03T09:07:45.433Z"
+        },
+        "updatedAt": {
+            "$date": "2025-08-03T09:07:45.433Z"
+        },
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "688f27165b054f0a8eb2388b"
+        },
+        "email": "apdev123@dlsu.edu.ph",
+        "username": "APPDEV",
+        "description": "",
+        "remember": false,
+        "password": "$2b$10$GxY/tNr21mVdPaVhLduQG.ByjoUlk37h77AuB3R1x2owndsnh9a.i",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "createdAt": {
+            "$date": "2025-08-03T09:08:38.122Z"
+        },
+        "updatedAt": {
+            "$date": "2025-08-03T09:08:38.122Z"
+        },
+        "__v": 0
+    },
+    {
+        "_id": {
+            "$oid": "688f280a5b054f0a8eb23897"
+        },
+        "email": "arch2345@dlsu.edu.ph",
+        "username": "arch2",
+        "description": "",
+        "remember": false,
+        "password": "$2b$10$DNELYMGpiysgjXjNMuXds.Bnfef2/cU44xQhLBp7a4tYWizmp/QMS",
+        "picture": "picture.jpg",
+        "role": "Student",
+        "createdAt": {
+            "$date": "2025-08-03T09:12:42.967Z"
+        },
+        "updatedAt": {
+            "$date": "2025-08-03T09:12:42.967Z"
         },
         "__v": 0
     }
