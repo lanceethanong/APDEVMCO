@@ -16,8 +16,6 @@
       {{> dashboard-sidebar role=role}}
       <main class="content">
         {{{body}}}
-
-
         {{#if (eq role "Lab Technician")}}
         <div class="search-wrapper" style="margin: 32px auto 0; max-width: 420px;">
           <label for="technician-student-search" style="margin-bottom: 5px; font-weight: bold; color: #22543d;">Reserve for Student</label>
@@ -32,6 +30,8 @@
           <div id="technician-student-selected" class="selected-student-label"></div>
         </div>
         {{/if}}
+
+        
       </main>
     </div>
     {{> footer }}

@@ -250,21 +250,41 @@ app.post('/admin/remove-labtech', checkAdmin, async (req, res) => {
   res.redirect('/admin/view-labtech');
 });
 
+// //logout route 
+// app.get('/logout', (req, res) => {
+//   try {
+//     if(!req.session.user.remember) { // If user logouts 
+//       req.session.destroy(err =>{
+//         if (err){
+//           console.error('Session destruction error:', err);
+//           return res.status(500).send('Server error during logout.');
+//         }
+//         res.clearCookie('user-session');
+//         res.redirect('/');
+//       });
+//     } else {
+//       res.redirect('/');
+//     }
+//   } catch (error) {
+//     console.error('Logout error:', error);
+//     res.status(500).send('Server error during logout.');
+//   }
+// });
+
 //logout route 
 app.get('/logout', (req, res) => {
   try {
-    if(!req.session.user.remember) { // If user logouts 
-      req.session.destroy(err =>{
-        if (err){
-          console.error('Session destruction error:', err);
-          return res.status(500).send('Server error during logout.');
-        }
-        res.clearCookie('user-session');
-        res.redirect('/');
-      });
-    } else {
+    
+    req.session.destroy(err => {
+      if (err) {
+        console.error('Session destruction error:', err);
+        return res.status(500).send('Server error during logout.');
+      }
+      // Clear the session cookie
+      res.clearCookie('user-session');
+      // Redirect to home page
       res.redirect('/');
-    }
+    });
   } catch (error) {
     console.error('Logout error:', error);
     res.status(500).send('Server error during logout.');
