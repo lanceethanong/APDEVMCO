@@ -178,10 +178,12 @@ function timeTo24(timeStr) {
 
 // Helper function to prepare date for server (Manila time)
 function prepareDateForServer(dateStr) {
-  const date = new Date(dateStr);
-  // Manila is UTC+8
-  const manilaOffset = 8 * 60 * 60 * 1000;
-  return new Date(date.getTime() + manilaOffset);
+ 
+  if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+    const [year, month, day] = dateStr.split('-').map(Number);
+    return new Date(year, month - 1, day);
+  }
+  return new Date(dateStr);
 }
 
 async function checkIfCurrentReservation(reservationId, labId, row, column, date, time_start, time_end) {
@@ -313,9 +315,12 @@ document.getElementById('edit-reservation-form').addEventListener('submit', asyn
       return;
     }
 
-    // Prepare the date for server (Manila time)
     const serverDate = prepareDateForServer(formData.date);
-    formData.date = serverDate.toISOString();
+
+    const year = serverDate.getFullYear();
+    const month = String(serverDate.getMonth() + 1).padStart(2, '0');
+    const day = String(serverDate.getDate()).padStart(2, '0');
+    formData.date = `${year}-${month}-${day}`;
 
     const res = await fetch("/api/reservations/" + formData.id, {
       method: 'PUT',

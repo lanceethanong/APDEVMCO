@@ -1229,10 +1229,8 @@ app.get('/api/reservations/:id', async (req, res) => {
 //Edits reservation 
 app.put('/api/reservations/:id', async (req, res) => {
   try {
-    
     const timeRegex = /^(1[0-2]|0?[1-9]):(00|30) (AM|PM)$/i;
 
-    // Convert to 24-hour for duration check
     function to24Hour(timeStr) {
       const [time, period] = timeStr.split(' ');
       const [hours] = time.split(':').map(Number);
@@ -1248,19 +1246,25 @@ app.put('/api/reservations/:id', async (req, res) => {
       return res.status(400).json({ error: 'Minimum 1 hour duration required' });
     }
 
-    // Handle date format
-    if (req.body.date && /^\d{4}-\d{2}-\d{2}$/.test(req.body.date)) {
-      req.body.date = new Date(req.body.date + "T00:00:00+08:00");
+    // FIX: Proper date handling without timezone manipulation
+    let processedDate = req.body.date;
+    if (req.body.date) {
+      if (typeof req.body.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(req.body.date)) {
+        // Create date as local midnight without timezone conversion
+        const [year, month, day] = req.body.date.split('-').map(Number);
+        processedDate = new Date(year, month - 1, day);
+      } else {
+        processedDate = new Date(req.body.date);
+      }
     }
 
-    // Updates the reservation details after edit 
     const reservation = await Reservation.findByIdAndUpdate(
       req.params.id,
       {
-        time_start: req.body.time_start, //update time start
-        time_end: req.body.time_end, //update time end 
-        date: req.body.date, //update date 
-        lab: req.body.lab //update time 
+        time_start: req.body.time_start,
+        time_end: req.body.time_end,
+        date: processedDate,
+        lab: req.body.lab
       },
       { new: true }
     ).populate('user', 'username email')
@@ -1270,9 +1274,8 @@ app.put('/api/reservations/:id', async (req, res) => {
       throw new Error('Reservation not found');
     }
 
-    //Updates the reservation based on what fields were edited 
     if (req.body.row && req.body.column) {
-      await SeatList.updateOne( //update row and column
+      await SeatList.updateOne(
         { reservation: req.params.id },
         { 
           $set: { 
@@ -1288,6 +1291,7 @@ app.put('/api/reservations/:id', async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 });
+
 
 //get seat lists 
 app.get('/api/seat-lists', async (req, res) => {
