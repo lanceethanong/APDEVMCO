@@ -798,7 +798,7 @@ app.get('/dashboard/view-profile/:username', async (req, res) => {
 app.post('/api/log-error', async (req, res) => {
   try {
     const { message, stack, source } = req.body;
-    const user = req.session.user || null;
+    const user = req.session.user.username || null;
 
     await logError(
       {
